@@ -62,7 +62,7 @@ const Topbar: React.FC = () => {
           </svg>
         </div>
         <div className="flex items-baseline gap-1.5">
-          <span className="font-display font-bold text-[15px] text-text-primary tracking-wide">OMNIA STEELS</span>
+          <span className="font-display font-bold text-[15px] text-text-primary tracking-wide">TRACKING</span>
           <span className="font-display font-semibold text-[13px] text-accent-primary">CRM</span>
         </div>
       </div>
