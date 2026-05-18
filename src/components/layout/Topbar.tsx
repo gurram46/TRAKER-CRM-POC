@@ -54,12 +54,8 @@ const Topbar: React.FC = () => {
     <header className="h-[60px] bg-bg-secondary border-b border-border flex items-center justify-between px-6 fixed top-0 left-0 right-0 z-40">
       {/* Left — Logo */}
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-md bg-accent-primary/10 flex items-center justify-center border border-accent-primary/20">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <rect x="2" y="2" width="12" height="12" rx="2" stroke="#6366F1" strokeWidth="1.5" />
-            <rect x="4" y="4" width="8" height="2" rx="0.5" fill="#64748B" />
-            <rect x="4" y="10" width="8" height="2" rx="0.5" fill="#64748B" />
-          </svg>
+        <div className="w-8 h-8 rounded-md overflow-hidden bg-bg-primary flex items-center justify-center border border-border">
+          <img src="/logo.png" alt="TRACKING Logo" className="w-full h-full object-cover" />
         </div>
         <div className="flex items-baseline gap-1.5">
           <span className="font-display font-bold text-[15px] text-text-primary tracking-wide">TRACKING</span>
