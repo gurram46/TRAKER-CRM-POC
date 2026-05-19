@@ -75,7 +75,7 @@ const LogisticsTracking: React.FC = () => {
 
             {/* Progress Stepper */}
             <div className="mt-5 mb-4">
-              <div className="flex items-center justify-between relative">
+              <div className="flex items-start justify-between relative">
                 {/* Line behind dots */}
                 <div className="absolute top-[9px] left-[9px] right-[9px] h-[2px] bg-border z-0" />
                 <div
