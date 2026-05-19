@@ -78,7 +78,7 @@ const FollowupTracker: React.FC = () => {
 
           {/* Cards */}
           <div className="space-y-3">
-            {filtered.map((fu) => (
+            {filtered.map((fu, idx) => (
               <div
                 key={fu.id}
                 className={`bg-bg-tertiary border border-border ${borderColor[fu.status]} border-l-[3px] rounded-md p-4 shadow-card hover:bg-bg-hover transition-colors duration-150`}
@@ -89,7 +89,14 @@ const FollowupTracker: React.FC = () => {
                       <span className="text-[11px] font-display font-bold text-accent-primary">{fu.initials}</span>
                     </div>
                     <div>
-                      <p className="text-sm font-body font-semibold text-text-primary">{fu.client}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-body font-semibold text-text-primary">{fu.client}</p>
+                        {[0, 2].includes(idx) && (
+                          <span className="flex items-center gap-1.5 text-[10px] font-body font-medium text-[#0066FF] bg-[#0066FF]/10 px-2 py-0.5 rounded border border-[#0066FF]/20">
+                            <span className="font-bold text-[#0066FF] tracking-wide">ZOHO</span>
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs font-body text-text-muted">RE: {fu.rfqRef}</p>
                     </div>
                   </div>

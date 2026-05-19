@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Bell, Command, Mail, MessageCircle, IndianRupee, Truck } from 'lucide-react';
+import { Search, Bell, Command, Mail, MessageCircle, IndianRupee, Truck, RefreshCw, Loader2 } from 'lucide-react';
+import Toast from '../ui/Toast';
 
 interface NotificationItem {
   id: string;
@@ -35,6 +36,8 @@ const iconColorMap: Record<string, string> = {
 
 const Topbar: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [showToast, setShowToast] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -83,6 +86,25 @@ const Topbar: React.FC = () => {
 
       {/* Right — Bell + Avatar */}
       <div className="flex items-center gap-4">
+        {/* Sync Now Button */}
+        <button
+          onClick={() => {
+            setIsSyncing(true);
+            setTimeout(() => {
+              setIsSyncing(false);
+              setShowToast(true);
+            }, 2000);
+          }}
+          disabled={isSyncing}
+          className="flex items-center gap-2 px-3 py-1.5 rounded bg-bg-tertiary border border-border text-text-secondary hover:text-text-primary hover:border-border-accent transition-all text-xs font-body font-medium"
+        >
+          {isSyncing ? (
+            <Loader2 size={14} className="animate-spin text-accent-primary" />
+          ) : (
+            <RefreshCw size={14} />
+          )}
+          {isSyncing ? 'Syncing...' : 'Sync Now'}
+        </button>
         {/* Notification Bell with Dropdown */}
         <div className="relative" ref={notifRef}>
           <button
@@ -155,6 +177,12 @@ const Topbar: React.FC = () => {
           RS
         </div>
       </div>
+
+      <Toast 
+        message="Zoho CRM synced \u2014 3 new contacts imported" 
+        isVisible={showToast} 
+        onClose={() => setShowToast(false)} 
+      />
     </header>
   );
 };

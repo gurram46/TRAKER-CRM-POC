@@ -84,7 +84,16 @@ const VendorManagement: React.FC = () => {
               <tbody>
                 {vendorData.map((v, idx) => (
                   <tr key={v.id} className={`border-b border-border hover:bg-bg-hover transition-colors duration-150 ${idx % 2 === 0 ? 'bg-bg-tertiary' : ''}`}>
-                    <td className="px-4 py-3 text-sm font-body font-medium text-text-primary">{v.name}</td>
+                    <td className="px-4 py-3 text-sm font-body font-medium text-text-primary">
+                      <div className="flex items-center gap-2">
+                        {v.name}
+                        {[1, 3, 4].includes(idx) && (
+                          <span className="flex items-center gap-1.5 text-[10px] font-body font-medium text-[#0066FF] bg-[#0066FF]/10 px-2 py-0.5 rounded border border-[#0066FF]/20">
+                            <span className="font-bold text-[#0066FF] tracking-wide">ZOHO</span>
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-4 py-3 text-sm font-body text-text-secondary">{v.city}, {v.state}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">

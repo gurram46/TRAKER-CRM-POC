@@ -192,7 +192,16 @@ const RFQManagement: React.FC = () => {
                   }`}
                 >
                   <td className="px-4 py-3 text-xs font-mono text-text-muted">{rfq.id}</td>
-                  <td className="px-4 py-3 text-sm font-body font-medium text-text-primary">{rfq.client}</td>
+                  <td className="px-4 py-3 text-sm font-body font-medium text-text-primary">
+                    <div className="flex items-center gap-2">
+                      {rfq.client}
+                      {[0, 2, 5].includes(idx) && (
+                        <span className="flex items-center gap-1.5 text-[10px] font-body font-medium text-[#0066FF] bg-[#0066FF]/10 px-2 py-0.5 rounded border border-[#0066FF]/20">
+                          <span className="font-bold text-[#0066FF] tracking-wide">ZOHO</span>
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-4 py-3 text-sm font-body text-text-secondary">{rfq.material}</td>
                   <td className="px-4 py-3 text-sm font-mono text-text-primary text-right">{rfq.quantity}</td>
                   <td className={`px-4 py-3 text-sm font-body ${isDateUrgent(rfq.requiredBy) ? 'text-status-danger font-medium' : 'text-text-secondary'}`}>

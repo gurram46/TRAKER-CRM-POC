@@ -9,6 +9,7 @@ import PaymentTracking from './pages/PaymentTracking';
 import LogisticsTracking from './pages/LogisticsTracking';
 import FollowupTracker from './pages/FollowupTracker';
 import Communications from './pages/Communications';
+import Automations from './pages/Automations';
 
 const App: React.FC = () => {
   return (
@@ -21,6 +22,7 @@ const App: React.FC = () => {
         <Route path="/payments" element={<PaymentTracking />} />
         <Route path="/logistics" element={<LogisticsTracking />} />
         <Route path="/followups" element={<FollowupTracker />} />
+        <Route path="/automations" element={<Automations />} />
         <Route path="/communications" element={<Communications />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>

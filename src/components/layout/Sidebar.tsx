@@ -9,6 +9,7 @@ import {
   Truck,
   CalendarCheck,
   Mail,
+  Zap,
 } from 'lucide-react';
 
 interface NavItem {
@@ -34,6 +35,7 @@ const navSections: NavSection[] = [
     items: [
       { label: 'RFQ Management', path: '/rfq', icon: FileText },
       { label: 'Quotation Builder', path: '/quotations', icon: ClipboardList },
+      { label: 'Automations', path: '/automations', icon: Zap },
     ],
   },
   {
@@ -65,8 +67,8 @@ const navSections: NavSection[] = [
 
 const Sidebar: React.FC = () => {
   return (
-    <aside className="w-[240px] h-[calc(100vh-60px)] bg-bg-secondary border-r border-border fixed left-0 top-[60px] overflow-y-auto py-5 z-30">
-      <nav className="flex flex-col gap-6 px-3">
+    <aside className="w-[240px] h-[calc(100vh-60px)] bg-bg-secondary border-r border-border fixed left-0 top-[60px] overflow-y-auto flex flex-col py-5 z-30">
+      <nav className="flex flex-col gap-6 px-3 flex-shrink-0">
         {navSections.map((section) => (
           <div key={section.title}>
             <p className="text-[10px] font-body font-semibold text-text-muted uppercase tracking-[0.12em] px-3 mb-2">
@@ -94,6 +96,24 @@ const Sidebar: React.FC = () => {
           </div>
         ))}
       </nav>
+
+      {/* Demo: Zoho CRM Connection Badge */}
+      <div className="mt-auto pt-8 px-5 flex-shrink-0">
+        <div className="flex items-center justify-between p-3 rounded-lg bg-bg-tertiary border border-border shadow-sm group hover:border-border-accent transition-colors">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-md bg-[#0066FF]/10 flex items-center justify-center flex-shrink-0 border border-[#0066FF]/20">
+              <span className="font-display font-bold text-[15px] text-[#0066FF]">Z</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[13px] font-display font-semibold text-text-primary">Zoho CRM</span>
+              <span className="text-[11px] font-body text-text-muted flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-status-success animate-pulse" />
+                Connected
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
     </aside>
   );
 };
