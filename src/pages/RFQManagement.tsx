@@ -26,6 +26,25 @@ const RFQManagement: React.FC = () => {
 
   React.useEffect(() => {
     fetchRFQs();
+
+    const eventSource = new EventSource('http://localhost:3001/api/events');
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'new_rfq') {
+          const clientName = data.payload.client_name || data.payload.company || 'a client';
+          setToastMessage(`New RFQ received from ${clientName}`);
+          setShowToast(true);
+          fetchRFQs();
+        }
+      } catch (err) {
+        console.error('Error parsing SSE data', err);
+      }
+    };
+
+    return () => {
+      eventSource.close();
+    };
   }, []);
 
   const fetchRFQs = async () => {
