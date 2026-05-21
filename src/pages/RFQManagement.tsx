@@ -22,6 +22,8 @@ const RFQManagement: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [selectedRFQ, setSelectedRFQ] = useState<any>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const navigate = useNavigate();
 
   React.useEffect(() => {
@@ -61,14 +63,18 @@ const RFQManagement: React.FC = () => {
         return {
           id: d.rfq_number,
           client: d.company || d.client_name || 'Unknown',
+          contactName: d.client_name,
+          contactNumber: d.contact_number,
           material: firstMaterial,
           quantity: totalQty,
           itemCount: items.length,
+          items: items,
           requiredBy: d.required_by ? new Date(d.required_by).toISOString().split('T')[0] : 'N/A',
           vendorsSent: 0,
           status: d.status || 'New',
           created: d.created_at,
-          deliveryLocation: d.delivery_location || ''
+          deliveryLocation: d.delivery_location || '',
+          source: d.source || 'Manual'
         };
       });
       setRfqs(mapped);
@@ -288,7 +294,10 @@ const RFQManagement: React.FC = () => {
                           <span className="text-sm font-mono font-bold text-text-primary">{rfq.quantity} <span className="text-[11px] text-text-secondary">MT</span></span>
                         </div>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button className="w-7 h-7 flex items-center justify-center rounded bg-bg-secondary text-text-secondary hover:text-accent-primary transition-colors">
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setSelectedRFQ(rfq); setShowDetailModal(true); }}
+                            className="w-7 h-7 flex items-center justify-center rounded bg-bg-secondary text-text-secondary hover:text-accent-primary transition-colors"
+                          >
                             <Eye size={14} />
                           </button>
                         </div>
@@ -439,6 +448,102 @@ const RFQManagement: React.FC = () => {
             </div>
           </div>
         </div>
+      </Modal>
+
+      {/* ── RFQ Detail Modal ── */}
+      <Modal
+        isOpen={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+        title={`RFQ Details - ${selectedRFQ?.id}`}
+        width="max-w-4xl"
+        footer={
+          <>
+            <button
+              onClick={() => setShowDetailModal(false)}
+              className="px-4 py-2 text-sm font-body text-text-secondary border border-border rounded-md hover:bg-bg-hover transition-colors"
+            >
+              Close
+            </button>
+            <button
+              onClick={() => navigate('/quotations')}
+              className="px-4 py-2 text-sm font-body font-medium text-white bg-accent-primary hover:bg-accent-secondary rounded-md transition-colors"
+            >
+              Create Quotation
+            </button>
+          </>
+        }
+      >
+        {selectedRFQ && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-[10px] font-body text-text-muted uppercase tracking-wider mb-1">Company</p>
+                <p className="text-sm font-body text-text-primary font-medium">{selectedRFQ.client}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-body text-text-muted uppercase tracking-wider mb-1">Contact Name</p>
+                <p className="text-sm font-body text-text-primary">{selectedRFQ.contactName || '—'}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-body text-text-muted uppercase tracking-wider mb-1">Contact Number</p>
+                <p className="text-sm font-body text-text-primary">{selectedRFQ.contactNumber || '—'}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-body text-text-muted uppercase tracking-wider mb-1">Delivery Location</p>
+                <p className="text-sm font-body text-text-primary">{selectedRFQ.deliveryLocation || '—'}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pb-4 border-b border-border">
+              <div>
+                <p className="text-[10px] font-body text-text-muted uppercase tracking-wider mb-1">Source</p>
+                <span className="text-xs font-body text-text-secondary bg-bg-secondary border border-border px-2 py-0.5 rounded capitalize">
+                  {selectedRFQ.source}
+                </span>
+              </div>
+              <div>
+                <p className="text-[10px] font-body text-text-muted uppercase tracking-wider mb-1">Created Date</p>
+                <p className="text-sm font-body text-text-primary">{new Date(selectedRFQ.created).toLocaleDateString()}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-body text-text-muted uppercase tracking-wider mb-1">Required By</p>
+                <p className="text-sm font-body text-text-primary">{selectedRFQ.requiredBy !== 'N/A' ? new Date(selectedRFQ.requiredBy).toLocaleDateString() : 'N/A'}</p>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-display font-semibold text-text-primary mb-3">Requested Items</h4>
+              <div className="border border-border rounded-md overflow-hidden">
+                <table className="w-full text-left border-collapse">
+                  <thead className="bg-bg-secondary border-b border-border">
+                    <tr>
+                      <th className="p-3 text-xs font-body font-medium text-text-secondary">Material</th>
+                      <th className="p-3 text-xs font-body font-medium text-text-secondary">Specification</th>
+                      <th className="p-3 text-xs font-body font-medium text-text-secondary text-right">Quantity (MT)</th>
+                      <th className="p-3 text-xs font-body font-medium text-text-secondary">Remarks</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {selectedRFQ.items && selectedRFQ.items.length > 0 ? (
+                      selectedRFQ.items.map((item: any, idx: number) => (
+                        <tr key={idx} className="bg-bg-primary">
+                          <td className="p-3 text-sm font-body text-text-primary">{item.material_type}</td>
+                          <td className="p-3 text-sm font-body text-text-secondary">{item.specification || '—'}</td>
+                          <td className="p-3 text-sm font-mono text-text-primary text-right">{item.quantity_mt}</td>
+                          <td className="p-3 text-sm font-body text-text-secondary">{item.remarks || '—'}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr className="bg-bg-primary">
+                        <td colSpan={4} className="p-4 text-sm font-body text-text-muted text-center">No items listed</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
       </Modal>
 
       {/* Toast */}
