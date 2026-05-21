@@ -32,7 +32,8 @@ const RFQManagement: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getAllRFQs();
+      const response = await getAllRFQs();
+      const data = Array.isArray(response) ? response : (response?.data || response?.rfqs || []);
       const mapped = data.map((d: any) => ({
         id: d.rfq_number,
         client: d.client_name || 'Unknown',
@@ -97,7 +98,7 @@ const RFQManagement: React.FC = () => {
       counts[r.status] = (counts[r.status] || 0) + 1;
     });
     return counts;
-  }, []);
+  }, [rfqs]);
 
   const isDateUrgent = (dateStr: string) => {
     const date = new Date(dateStr);

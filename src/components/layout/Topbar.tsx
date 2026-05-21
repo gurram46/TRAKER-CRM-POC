@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Bell, Command, Mail, MessageCircle, IndianRupee, Truck, RefreshCw, Loader2 } from 'lucide-react';
 import Toast from '../ui/Toast';
+import ThemeToggle from '../ui/ThemeToggle';
 
 interface NotificationItem {
   id: string;
@@ -36,9 +37,11 @@ const iconColorMap: Record<string, string> = {
 
 const Topbar: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
@@ -47,6 +50,9 @@ const Topbar: React.FC = () => {
     const handler = (e: MouseEvent) => {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
         setShowNotifications(false);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setShowUserMenu(false);
       }
     };
     document.addEventListener('mousedown', handler);
@@ -105,6 +111,7 @@ const Topbar: React.FC = () => {
           )}
           {isSyncing ? 'Syncing...' : 'Sync Now'}
         </button>
+        <ThemeToggle />
         {/* Notification Bell with Dropdown */}
         <div className="relative" ref={notifRef}>
           <button
@@ -172,14 +179,38 @@ const Topbar: React.FC = () => {
           )}
         </div>
 
-        {/* User Avatar */}
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center text-white font-display font-bold text-[11px]">
-          RS
+        {/* User Profile / Logout Dropdown */}
+        <div className="relative" ref={userMenuRef}>
+          <button
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            className="w-8 h-8 rounded-full bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center text-white font-display font-bold text-[11px] hover:opacity-90 transition-opacity focus:outline-none"
+          >
+            RS
+          </button>
+          
+          {showUserMenu && (
+            <div className="absolute right-0 top-full mt-2 w-48 bg-bg-tertiary border border-border rounded-lg shadow-dropdown z-50 overflow-hidden animate-modal-enter">
+              <div className="px-4 py-2.5 border-b border-border">
+                <p className="text-xs font-semibold text-text-primary">Rajesh Sharma</p>
+                <p className="text-[10px] text-text-muted">admin@yourcompany.com</p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowUserMenu(false);
+                  localStorage.removeItem('crm_authenticated');
+                  navigate('/login');
+                }}
+                className="w-full text-left px-4 py-2 text-xs text-status-danger hover:bg-bg-hover transition-colors font-medium"
+              >
+                Sign Out
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       <Toast 
-        message="Zoho CRM synced \u2014 3 new contacts imported" 
+        message="Zoho CRM synced — 3 new contacts imported" 
         isVisible={showToast} 
         onClose={() => setShowToast(false)} 
       />

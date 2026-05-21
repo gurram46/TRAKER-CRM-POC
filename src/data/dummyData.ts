@@ -7,6 +7,34 @@ export const materials = [
 
 export type MaterialType = typeof materials[number];
 
+export interface Contact {
+  id: string;
+  name: string;
+  company: string;
+  type: 'Client' | 'Vendor' | 'Transporter';
+  phone: string;
+  email: string;
+  city: string;
+  deals: number;
+  value: string;
+  lastActive: string;
+  avatar: string;
+}
+
+export const contactsData: Contact[] = [
+  { id: 'C-001', name: 'Vijaya Constructions', company: 'Vijaya Constructions Pvt Ltd', type: 'Client', phone: '9876543210', email: 'vijaya@constructions.com', city: 'Hyderabad', deals: 4, value: '₹18.2L', lastActive: '15 May 2026', avatar: 'VC' },
+  { id: 'C-002', name: 'Sri Lakshmi Steels', company: 'Sri Lakshmi Steels Ltd', type: 'Client', phone: '9845612378', email: 'srilakshmi@steels.com', city: 'Vijayawada', deals: 6, value: '₹31.4L', lastActive: '14 May 2026', avatar: 'SL' },
+  { id: 'C-003', name: 'Prasad Infrastructure', company: 'Prasad Infra Pvt Ltd', type: 'Client', phone: '9912345678', email: 'prasad@infra.com', city: 'Visakhapatnam', deals: 3, value: '₹21.3L', lastActive: '12 May 2026', avatar: 'PI' },
+  { id: 'C-004', name: 'KVR Builders', company: 'KVR Builders & Developers', type: 'Client', phone: '9988776655', email: 'kvr@builders.com', city: 'Guntur', deals: 5, value: '₹44.1L', lastActive: '10 May 2026', avatar: 'KB' },
+  { id: 'C-005', name: 'Ravi Structures', company: 'Ravi Structures Pvt Ltd', type: 'Client', phone: '9944332211', email: 'ravi@structures.com', city: 'Kurnool', deals: 2, value: '₹9.8L', lastActive: '08 May 2026', avatar: 'RS' },
+  { id: 'C-006', name: 'Amaravati Developers', company: 'Amaravati Dev Corp', type: 'Client', phone: '9722110099', email: 'amara@dev.com', city: 'Amaravati', deals: 7, value: '₹62.5L', lastActive: '18 May 2026', avatar: 'AD' },
+  { id: 'V-001', name: 'Narayana Steel Suppliers', company: 'Narayana Steel Suppliers', type: 'Vendor', phone: '9876543210', email: 'narayana@steels.com', city: 'Hyderabad', deals: 12, value: '₹84.0L', lastActive: '15 May 2026', avatar: 'NS' },
+  { id: 'V-002', name: 'Andhra Steel Works', company: 'Andhra Steel Works', type: 'Vendor', phone: '9845612378', email: 'andhra@steelworks.com', city: 'Vijayawada', deals: 8, value: '₹56.2L', lastActive: '13 May 2026', avatar: 'AS' },
+  { id: 'V-003', name: 'Deccan Metal Corp', company: 'Deccan Metal Corp', type: 'Vendor', phone: '9912345678', email: 'deccan@metals.com', city: 'Visakhapatnam', deals: 5, value: '₹38.7L', lastActive: '11 May 2026', avatar: 'DM' },
+  { id: 'T-001', name: 'Deccan Logistics', company: 'Deccan Logistics Pvt Ltd', type: 'Transporter', phone: '9833221100', email: 'deccan@logistics.com', city: 'Hyderabad', deals: 22, value: '₹18.4L', lastActive: '19 May 2026', avatar: 'DL' },
+  { id: 'T-002', name: 'Krishna Transport Co', company: 'Krishna Transport Co', type: 'Transporter', phone: '9988776655', email: 'krishna@transport.com', city: 'Vijayawada', deals: 15, value: '₹12.1L', lastActive: '17 May 2026', avatar: 'KT' },
+];
+
 export interface RFQ {
   id: string;
   client: string;
@@ -258,6 +286,29 @@ export interface IncomingEmail {
   extractedQuantity: number;
   extractedRequiredBy: string;
 }
+
+export interface Quotation {
+  id: string;
+  client: string;
+  project: string;
+  items: string;
+  value: string;
+  status: 'Draft' | 'Sent' | 'Accepted' | 'Rejected' | 'Expired';
+  validUntil: string;
+  assigned: string;
+  created: string;
+}
+
+export const quotationData: Quotation[] = [
+  { id: 'OSQ-0148', client: 'Vijaya Constructions', project: 'Kukatpally Phase 3', items: 'TMT Fe500D 20mm – 180 MT', value: '₹12.6L', status: 'Sent', validUntil: '28 May 2026', assigned: 'Adil', created: '2026-05-18' },
+  { id: 'OSQ-0147', client: 'Sri Lakshmi Steels', project: 'Ruwi Commercial Tower', items: 'ISMB 200 IS2062 – 45 MT', value: '₹8.4L', status: 'Accepted', validUntil: '26 May 2026', assigned: 'Adil', created: '2026-05-16' },
+  { id: 'OSQ-0146', client: 'Prasad Infrastructure', project: 'Seeb Residential Complex', items: 'MS Plates 10mm – 220 MT', value: '₹15.4L', status: 'Sent', validUntil: '25 May 2026', assigned: 'Adil', created: '2026-05-15' },
+  { id: 'OSQ-0145', client: 'KVR Builders', project: 'Amaravati Phase 1', items: 'MS Angles 75x75 – 60 MT', value: '₹4.8L', status: 'Rejected', validUntil: '23 May 2026', assigned: 'Adil', created: '2026-05-13' },
+  { id: 'OSQ-0144', client: 'Ravi Structures', project: 'Guntur Township', items: 'HR Coil 2mm – 95 MT', value: '₹9.1L', status: 'Accepted', validUntil: '22 May 2026', assigned: 'Adil', created: '2026-05-12' },
+  { id: 'OSQ-0143', client: 'Amaravati Developers', project: 'Capital City Infra', items: 'Structural Steel – 500 MT', value: '₹44.5L', status: 'Draft', validUntil: '30 May 2026', assigned: 'Adil', created: '2026-05-11' },
+  { id: 'OSQ-0142', client: 'Bharat Steel Corp', project: 'Vizag Port Project', items: 'GI Sheet 0.5mm – 75 MT', value: '₹6.2L', status: 'Expired', validUntil: '18 May 2026', assigned: 'Adil', created: '2026-05-08' },
+  { id: 'OSQ-0141', client: 'Sai Krishna Infra', project: 'Hyderabad Metro Ext', items: 'CR Sheet 1mm – 130 MT', value: '₹11.7L', status: 'Accepted', validUntil: '20 May 2026', assigned: 'Adil', created: '2026-05-07' },
+];
 
 export const incomingEmails: IncomingEmail[] = [
   {

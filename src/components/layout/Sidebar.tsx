@@ -40,7 +40,8 @@ const navSections: NavSection[] = [
     items: [
       { label: 'RFQ Management', path: '/rfq', icon: FileText },
       { label: 'New Enquiry', path: '/new-enquiry', icon: FilePlus },
-      { label: 'Quotation Builder', path: '/quotations', icon: ClipboardList },
+      { label: 'Quotations', path: '/quotations', icon: ClipboardList },
+      { label: 'Quotation Builder', path: '/quotation-builder', icon: ClipboardList },
       { label: 'Price Calculator', path: '/calculator', icon: Calculator },
       { label: 'Automations', path: '/automations', icon: Zap },
     ],
@@ -49,6 +50,8 @@ const navSections: NavSection[] = [
     title: 'MASTERS',
     items: [
       { label: 'Item Master', path: '/items', icon: Package },
+      { label: 'Vendors', path: '/vendors', icon: Users },
+      { label: 'Transporters', path: '/transporters', icon: Truck },
     ],
   },
   {
@@ -61,7 +64,7 @@ const navSections: NavSection[] = [
   {
     title: 'RELATIONSHIPS',
     items: [
-      { label: 'Vendor Management', path: '/vendors', icon: Users },
+      { label: 'Contacts', path: '/contacts', icon: Users },
     ],
   },
   {

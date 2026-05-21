@@ -1,35 +1,44 @@
 import React, { useState, useMemo } from 'react';
-import { MessageCircle, Copy, ExternalLink, Check } from 'lucide-react';
-import { rfqData } from '../data/dummyData';
+import { Copy, ExternalLink, Check, Send, QrCode, Zap } from 'lucide-react';
+import { rfqData, quotationData } from '../data/dummyData';
 
 const eventTypes = [
-  'New Enquiry Acknowledgement',
-  'Quotation Sent',
-  'Dispatch Update',
-  'Payment Reminder',
+  { id: 'enquiry', label: 'New Enquiry', sub: 'Notify team of incoming RFQ', icon: '📋' },
+  { id: 'quotation', label: 'Quotation Sent', sub: 'Alert client quote is ready', icon: '📄' },
+  { id: 'dispatch', label: 'Dispatch Update', sub: 'Share shipment tracking info', icon: '🚚' },
+  { id: 'payment', label: 'Payment Reminder', sub: 'Chase overdue invoices', icon: '💳' },
 ];
 
 const WhatsAppGenerator: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = useState(eventTypes[0]);
   const [selectedRecordId, setSelectedRecordId] = useState(rfqData[0].id);
+  const [phone, setPhone] = useState('');
   const [copied, setCopied] = useState(false);
 
-  const selectedRecord = useMemo(() => rfqData.find(r => r.id === selectedRecordId) || rfqData[0], [selectedRecordId]);
+  const isQuotationEvent = selectedEvent.id === 'quotation';
+
+  const rfqRecord = useMemo(() => rfqData.find(r => r.id === selectedRecordId) || rfqData[0], [selectedRecordId]);
+  const quoteRecord = useMemo(() => quotationData[0], []);
+
+  const selectedRecord = isQuotationEvent ? null : rfqRecord;
 
   const generatedMessage = useMemo(() => {
-    switch (selectedEvent) {
-      case 'New Enquiry Acknowledgement':
-        return `Hello *${selectedRecord.client}*,\n\nThank you for your enquiry (*${selectedRecord.id}*) for ${selectedRecord.quantity} MT of ${selectedRecord.material}.\n\nOur team is currently reviewing the best rates for you. We will share a formal quotation shortly.\n\nRegards,\n*Omnia Steels Team*`;
-      case 'Quotation Sent':
-        return `Hello *${selectedRecord.client}*,\n\nPlease find the quotation attached for your enquiry (*${selectedRecord.id}*).\n\nMaterial: ${selectedRecord.material}\nQuantity: ${selectedRecord.quantity} MT\n\nLet us know if you have any questions or need to negotiate rates.\n\nRegards,\n*Omnia Steels Team*`;
-      case 'Dispatch Update':
-        return `Update for *${selectedRecord.client}*:\n\nYour order against ${selectedRecord.id} (${selectedRecord.material}) has been dispatched!\n\nThe vehicle details and tracking link will follow in a separate message.\n\nThank you for choosing Omnia Steels.`;
-      case 'Payment Reminder':
-        return `Dear *${selectedRecord.client}*,\n\nThis is a gentle reminder regarding the pending payment for order ${selectedRecord.id}.\n\nPlease clear the dues at your earliest convenience to avoid any delays in future dispatches.\n\nRegards,\n*Accounts Team, Omnia Steels*`;
+    switch (selectedEvent.id) {
+      case 'enquiry':
+        return `Hello *${rfqRecord.client}*,\n\nThank you for your enquiry (*${rfqRecord.id}*) for ${rfqRecord.quantity} MT of ${rfqRecord.material}.\n\nOur team is currently reviewing the best rates for you. We will share a formal quotation shortly.\n\nRegards,\n*Omnia Steels Team*`;
+      case 'quotation':
+        return `Quotation Ready – ${quoteRecord.id}\n– – – – – – – – – – – –\n*Client:* ${quoteRecord.client}\n*Project:* ${quoteRecord.project}\n*Quote Value:* ${quoteRecord.value}\n*Valid Until:* ${quoteRecord.validUntil}\n\nAwaiting your confirmation. Please revert at the earliest.\n\n– Omnia Steels`;
+      case 'dispatch':
+        return `Update for *${rfqRecord.client}*:\n\nYour order against ${rfqRecord.id} (${rfqRecord.material}) has been dispatched!\n\nThe vehicle details and tracking link will follow in a separate message.\n\nThank you for choosing Omnia Steels.`;
+      case 'payment':
+        return `Dear *${rfqRecord.client}*,\n\nThis is a gentle reminder regarding the pending payment for order ${rfqRecord.id}.\n\nPlease clear the dues at your earliest convenience to avoid any delays in future dispatches.\n\nRegards,\n*Accounts Team, Omnia Steels*`;
       default:
         return '';
     }
-  }, [selectedEvent, selectedRecord]);
+  }, [selectedEvent, rfqRecord, quoteRecord]);
+
+  const displayName = isQuotationEvent ? quoteRecord.client : rfqRecord.client;
+  const displayInitials = displayName.substring(0, 2).toUpperCase();
 
   const handleCopy = () => {
     navigator.clipboard.writeText(generatedMessage);
@@ -37,96 +46,129 @@ const WhatsAppGenerator: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleOpenWhatsApp = () => {
-    const url = `https://wa.me/?text=${encodeURIComponent(generatedMessage)}`;
+  const handleSemiManual = () => {
+    const url = phone
+      ? `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(generatedMessage)}`
+      : `https://wa.me/?text=${encodeURIComponent(generatedMessage)}`;
+    window.open(url, '_blank');
+  };
+
+  const handleAutoSend = () => {
+    const url = phone
+      ? `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(generatedMessage)}`
+      : `https://wa.me/?text=${encodeURIComponent(generatedMessage)}`;
     window.open(url, '_blank');
   };
 
   return (
-    <div className="max-w-4xl space-y-6 pb-10">
-      <div className="flex items-center gap-3">
-        <h1 className="text-2xl font-display font-bold text-text-primary">WhatsApp Generator</h1>
+    <div className="space-y-5 pb-10">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-display font-bold text-text-primary">WhatsApp Generator</h1>
+          <p className="text-sm text-text-secondary mt-0.5">Generate and send WhatsApp messages to clients</p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Left Form */}
-        <div className="space-y-5 bg-bg-tertiary border border-border rounded-md shadow-card p-5">
-          <h2 className="text-sm font-display font-bold text-text-primary uppercase tracking-wider mb-2">Message Configuration</h2>
-          
-          <div>
-            <label className="block text-xs font-body font-medium text-text-secondary mb-1.5">Event Type</label>
+      <div className="flex gap-6">
+        {/* Left Panel */}
+        <div className="w-80 flex-shrink-0 space-y-5">
+          <div className="bg-bg-tertiary border border-border rounded-xl p-5 space-y-5">
+            <h2 className="text-xs font-body font-bold text-text-muted uppercase tracking-widest">1 — Event Type</h2>
             <div className="space-y-2">
               {eventTypes.map(event => (
-                <label key={event} className={`flex items-center gap-3 p-3 rounded-md border cursor-pointer transition-all duration-150 ${selectedEvent === event ? 'border-accent-primary bg-accent-primary/5' : 'border-border bg-bg-primary hover:border-border-accent'}`}>
-                  <input 
-                    type="radio" 
-                    name="eventType" 
-                    value={event} 
-                    checked={selectedEvent === event}
-                    onChange={(e) => setSelectedEvent(e.target.value)}
-                    className="accent-accent-primary"
-                  />
-                  <span className={`text-sm font-body ${selectedEvent === event ? 'font-semibold text-text-primary' : 'text-text-secondary'}`}>{event}</span>
-                </label>
+                <button key={event.id} onClick={() => setSelectedEvent(event)}
+                  className={`w-full flex items-start gap-3 p-3 rounded-lg border text-left transition-all ${selectedEvent.id === event.id ? 'border-accent-primary bg-accent-primary/8' : 'border-border bg-bg-primary hover:bg-bg-hover'}`}>
+                  <span className="text-base mt-0.5">{event.icon}</span>
+                  <div>
+                    <p className={`text-sm font-body font-semibold ${selectedEvent.id === event.id ? 'text-text-primary' : 'text-text-secondary'}`}>{event.label}</p>
+                    <p className="text-xs text-text-muted">{event.sub}</p>
+                  </div>
+                </button>
               ))}
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-body font-medium text-text-secondary mb-1.5">Select Record (Client/RFQ)</label>
-            <select 
-              value={selectedRecordId} 
-              onChange={e => setSelectedRecordId(e.target.value)}
-              className="w-full bg-bg-primary border border-border rounded-md py-2.5 px-3 text-sm font-body text-text-primary"
-            >
-              {rfqData.map(rfq => (
-                <option key={rfq.id} value={rfq.id}>{rfq.client} — {rfq.id}</option>
-              ))}
-            </select>
+          <div className="bg-bg-tertiary border border-border rounded-xl p-5 space-y-4">
+            <h2 className="text-xs font-body font-bold text-text-muted uppercase tracking-widest">2 — Select Record</h2>
+            {isQuotationEvent ? (
+              <select className="w-full bg-bg-primary border border-border rounded-lg py-2.5 px-3 text-sm font-body text-text-primary">
+                {quotationData.map(q => (
+                  <option key={q.id} value={q.id}>{q.id} – {q.client}</option>
+                ))}
+              </select>
+            ) : (
+              <select value={selectedRecordId} onChange={e => setSelectedRecordId(e.target.value)}
+                className="w-full bg-bg-primary border border-border rounded-lg py-2.5 px-3 text-sm font-body text-text-primary">
+                {rfqData.map(rfq => (
+                  <option key={rfq.id} value={rfq.id}>{rfq.id} – {rfq.client}</option>
+                ))}
+              </select>
+            )}
+
+            <div>
+              <h2 className="text-xs font-body font-bold text-text-muted uppercase tracking-widest mb-2">3 — Recipient Phone</h2>
+              <input type="text" value={phone} onChange={e => setPhone(e.target.value)}
+                placeholder="+91 98765 43210 (optional)"
+                className="w-full bg-bg-primary border border-border rounded-lg py-2.5 px-3 text-sm font-body text-text-primary placeholder:text-text-muted" />
+              <p className="text-[11px] text-text-muted mt-1">With number – opens their chat directly</p>
+            </div>
           </div>
         </div>
 
         {/* Right Preview */}
-        <div className="bg-[#EFEAE2] dark:bg-[#0B141A] border border-border rounded-md shadow-card overflow-hidden flex flex-col relative h-[500px]">
-          {/* Header */}
-          <div className="bg-[#008069] dark:bg-[#202C33] text-white p-3 flex items-center gap-3 shadow-sm z-10">
-            <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-sm font-bold">{selectedRecord.client.substring(0, 2).toUpperCase()}</span>
-            </div>
-            <div>
-              <div className="font-semibold text-[15px] leading-tight">{selectedRecord.client}</div>
-              <div className="text-xs text-white/80">business account</div>
-            </div>
-          </div>
-
-          {/* Chat BG */}
-          <div className="flex-1 p-5 overflow-y-auto relative" style={{ backgroundImage: 'url("https://w0.peakpx.com/wallpaper/508/871/HD-wallpaper-whatsapp-background-texture-theme-whatsapp.jpg")', backgroundSize: 'cover', opacity: 0.9 }}>
-            {/* Message Bubble */}
-            <div className="max-w-[85%] ml-auto bg-[#D9FDD3] dark:bg-[#005C4B] rounded-lg rounded-tr-none p-3 shadow-sm relative text-[14.5px] font-body text-[#111B21] dark:text-[#E9EDEF] whitespace-pre-wrap leading-relaxed">
-              {generatedMessage}
-              <div className="text-[10px] text-[#667781] dark:text-[#8696A0] text-right mt-1 font-sans">
-                {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        <div className="flex-1 flex flex-col gap-4">
+          {/* WA Header */}
+          <div className="bg-bg-tertiary border border-border rounded-xl overflow-hidden flex flex-col" style={{ height: '520px' }}>
+            <div className="bg-[#008069] text-white px-4 py-3 flex items-center gap-3">
+              <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
+                {displayInitials}
               </div>
-              {/* Bubble Tail */}
-              <div className="absolute top-0 -right-2 w-0 h-0 border-l-[10px] border-l-[#D9FDD3] dark:border-l-[#005C4B] border-b-[10px] border-b-transparent border-t-0"></div>
+              <div>
+                <p className="font-semibold text-[15px] leading-tight">{displayName}</p>
+                <p className="text-xs text-white/75">WhatsApp Business · online</p>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5 bg-[#EFEAE2]">
+              <div className="max-w-[85%] ml-auto bg-[#D9FDD3] rounded-xl rounded-tr-none p-3.5 shadow-sm relative">
+                <p className="text-[14px] text-[#111B21] whitespace-pre-wrap leading-relaxed font-sans">{generatedMessage}</p>
+                <p className="text-[10px] text-[#667781] text-right mt-1.5">
+                  {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ✓✓
+                </p>
+                <div className="absolute top-0 -right-2 w-0 h-0 border-l-[10px] border-l-[#D9FDD3] border-b-[10px] border-b-transparent" />
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="bg-bg-secondary border-t border-border p-3 grid grid-cols-3 gap-2">
+              <button onClick={handleCopy}
+                className="flex items-center justify-center gap-1.5 bg-bg-primary border border-border hover:bg-bg-hover text-text-primary text-xs font-body font-medium py-2.5 rounded-lg transition-colors">
+                {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                {copied ? 'Copied!' : 'Copy Message'}
+              </button>
+              <button onClick={handleSemiManual}
+                className="flex items-center justify-center gap-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-body font-medium py-2.5 rounded-lg transition-colors">
+                <Send size={14} />
+                Send Semi-Manually
+              </button>
+              <button onClick={handleAutoSend}
+                className="flex items-center justify-center gap-1.5 bg-[#008069] hover:bg-[#01705C] text-white text-xs font-body font-medium py-2.5 rounded-lg transition-colors">
+                <Zap size={14} />
+                Send Automatically
+              </button>
             </div>
           </div>
 
-          {/* Action Footer */}
-          <div className="bg-[#F0F2F5] dark:bg-[#202C33] p-3 border-t border-border flex items-center gap-2">
-            <button 
-              onClick={handleCopy}
-              className="flex-1 flex justify-center items-center gap-2 bg-white dark:bg-[#2A3942] hover:bg-gray-50 dark:hover:bg-[#32454F] border border-border text-text-primary text-sm font-body font-medium px-4 py-2.5 rounded-md transition-colors"
-            >
-              {copied ? <Check size={16} className="text-status-success" /> : <Copy size={16} />}
-              {copied ? 'Copied!' : 'Copy Text'}
+          {/* Bottom row */}
+          <div className="grid grid-cols-2 gap-3">
+            <button className="flex items-center justify-center gap-2 bg-bg-tertiary border border-border hover:bg-bg-hover text-text-secondary text-sm font-body font-medium py-3 rounded-xl transition-colors">
+              <QrCode size={16} />
+              Scan QR Code
             </button>
-            <button 
-              onClick={handleOpenWhatsApp}
-              className="flex-1 flex justify-center items-center gap-2 bg-[#008069] hover:bg-[#01705C] text-white text-sm font-body font-medium px-4 py-2.5 rounded-md transition-colors"
-            >
-              <ExternalLink size={16} />
-              Open Web
+            <button onClick={handleAutoSend}
+              className="flex items-center justify-center gap-2 bg-[#1B4332] hover:bg-[#1a3d2e] text-white text-sm font-body font-medium py-3 rounded-xl transition-colors">
+              <Zap size={16} />
+              Auto Send via Twilio
             </button>
           </div>
         </div>

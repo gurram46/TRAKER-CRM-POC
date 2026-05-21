@@ -1,9 +1,15 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import Topbar from './Topbar';
 import Sidebar from './Sidebar';
 
 const AppShell: React.FC = () => {
+  const isAuthenticated = localStorage.getItem('crm_authenticated') === 'true';
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
   return (
     <div className="min-h-screen bg-bg-primary">
       <Topbar />
