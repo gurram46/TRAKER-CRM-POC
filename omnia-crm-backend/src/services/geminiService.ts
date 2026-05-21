@@ -34,7 +34,7 @@ Extract ALL line items from tables. Email content: ${emailContent}`;
   } catch (err: any) {
     if (err.status === 429 || err.message?.includes('429') || err.message?.includes('Too Many Requests')) {
       console.log("Primary Gemini API key rate limited, using fallback...");
-      responseText = await callGemini('AIzaSyCJOMKHRLuPcrLRB0mM102FEoHmRdBcudw');
+      responseText = await callGemini(process.env.GEMINI_FALLBACK_API_KEY || '');
     } else {
       throw err;
     }
