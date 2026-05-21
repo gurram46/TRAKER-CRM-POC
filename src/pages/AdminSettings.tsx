@@ -140,7 +140,7 @@ const AdminSettings: React.FC = () => {
               <div className="space-y-5">
                 <div>
                   <label className="flex items-center justify-between text-xs font-body font-medium text-text-secondary mb-1.5">
-                    Quotation Sent (Subject: Quotation for {{rfq_id}})
+                    {"Quotation Sent (Subject: Quotation for {{rfq_id}})"}
                   </label>
                   <textarea rows={4} defaultValue="Dear {{contact_name}},\n\nPlease find attached the quotation for your recent enquiry.\n\nIf you have any questions, feel free to reply to this email." className="w-full bg-bg-primary border border-border rounded-md py-2.5 px-3 text-sm font-mono text-text-primary resize-none" />
                 </div>
