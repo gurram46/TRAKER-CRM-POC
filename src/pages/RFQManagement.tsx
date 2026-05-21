@@ -498,7 +498,7 @@ const RFQManagement: React.FC = () => {
               <div>
                 <p className="text-[10px] font-body text-text-muted uppercase tracking-wider mb-1">Source</p>
                 <span className="text-xs font-body text-text-secondary bg-bg-secondary border border-border px-2 py-0.5 rounded capitalize">
-                  {selectedRFQ.source}
+                  {selectedRFQ.source === 'email' ? 'Email — Auto Parsed' : selectedRFQ.source}
                 </span>
               </div>
               <div>
@@ -517,9 +517,10 @@ const RFQManagement: React.FC = () => {
                 <table className="w-full text-left border-collapse">
                   <thead className="bg-bg-secondary border-b border-border">
                     <tr>
+                      <th className="p-3 text-xs font-body font-medium text-text-secondary w-12">Sr</th>
                       <th className="p-3 text-xs font-body font-medium text-text-secondary">Material</th>
-                      <th className="p-3 text-xs font-body font-medium text-text-secondary">Specification</th>
-                      <th className="p-3 text-xs font-body font-medium text-text-secondary text-right">Quantity (MT)</th>
+                      <th className="p-3 text-xs font-body font-medium text-text-secondary">Grade/Spec</th>
+                      <th className="p-3 text-xs font-body font-medium text-text-secondary text-right">Qty MT</th>
                       <th className="p-3 text-xs font-body font-medium text-text-secondary">Remarks</th>
                     </tr>
                   </thead>
@@ -527,8 +528,9 @@ const RFQManagement: React.FC = () => {
                     {selectedRFQ.items && selectedRFQ.items.length > 0 ? (
                       selectedRFQ.items.map((item: any, idx: number) => (
                         <tr key={idx} className="bg-bg-primary">
+                          <td className="p-3 text-sm font-body text-text-secondary">{idx + 1}</td>
                           <td className="p-3 text-sm font-body text-text-primary">{item.material_type}</td>
-                          <td className="p-3 text-sm font-body text-text-secondary">{item.specification || '—'}</td>
+                          <td className="p-3 text-sm font-body text-text-secondary">{[item.grade, item.specification].filter(Boolean).join(' / ') || '—'}</td>
                           <td className="p-3 text-sm font-mono text-text-primary text-right">{item.quantity_mt}</td>
                           <td className="p-3 text-sm font-body text-text-secondary">{item.remarks || '—'}</td>
                         </tr>

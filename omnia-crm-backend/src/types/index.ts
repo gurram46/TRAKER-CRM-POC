@@ -19,12 +19,18 @@ export interface ExtractedEmailData {
   contact_number: string;
   company: string;
   delivery_location: string;
+  project_name?: string;
   items: {
     material_type: string;
+    original_description?: string;
+    grade?: string;
     quantity_mt: number;
     specification: string;
     remarks: string;
+    uom?: string;
   }[];
   required_by: string;
   special_requirements: string;
+  payment_terms?: string;
+  delivery_terms?: string;
 }
