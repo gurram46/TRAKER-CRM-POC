@@ -1,10 +1,12 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { Plus, Search, Eye, Edit, ArrowRightCircle, Mail, Download, Clock } from 'lucide-react';
+import { Plus, Search, Eye, Edit, ArrowRightCircle, Mail, Download, Clock, Kanban } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import StatusBadge from '../components/ui/StatusBadge';
 import Modal from '../components/ui/Modal';
 import Toast from '../components/ui/Toast';
-import { rfqData, materials, vendorData, incomingEmails } from '../data/dummyData';
+import { rfqData as dummyRfqData, materials, vendorData, incomingEmails } from '../data/dummyData';
 import type { RFQ, IncomingEmail } from '../data/dummyData';
+import { getAllRFQs, importFromEmail } from '../services/api';
 
 const statusTabs = ['All', 'New', 'Sent', 'Responded', 'Converted'] as const;
 
@@ -15,6 +17,54 @@ const RFQManagement: React.FC = () => {
   const [showEmailImport, setShowEmailImport] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
+  
+  const [rfqs, setRfqs] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const navigate = useNavigate();
+
+  React.useEffect(() => {
+    fetchRFQs();
+  }, []);
+
+  const fetchRFQs = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await getAllRFQs();
+      const mapped = data.map((d: any) => ({
+        id: d.rfq_number,
+        client: d.client_name || 'Unknown',
+        material: d.material_type || 'Unknown',
+        quantity: d.quantity_mt || '0',
+        requiredBy: d.required_by ? new Date(d.required_by).toISOString().split('T')[0] : 'N/A',
+        vendorsSent: 0,
+        status: d.status || 'New',
+        created: d.created_at
+      }));
+      setRfqs(mapped);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAutoImport = async () => {
+    setIsImporting(true);
+    try {
+      await importFromEmail();
+      setToastMessage('Successfully imported RFQs from email');
+      setShowToast(true);
+      fetchRFQs();
+    } catch (err: any) {
+      setToastMessage('Error importing emails: ' + err.message);
+      setShowToast(true);
+    } finally {
+      setIsImporting(false);
+    }
+  };
 
   // New RFQ form state (for auto-fill from email)
   const [formClient, setFormClient] = useState('');
@@ -25,7 +75,7 @@ const RFQManagement: React.FC = () => {
   const [formRequirements, setFormRequirements] = useState('');
 
   const filteredRFQs = useMemo(() => {
-    let data = rfqData;
+    let data = rfqs;
     if (activeTab !== 'All') {
       data = data.filter((r) => r.status === activeTab);
     }
@@ -42,8 +92,8 @@ const RFQManagement: React.FC = () => {
   }, [activeTab, searchQuery]);
 
   const statusCounts = useMemo(() => {
-    const counts: Record<string, number> = { All: rfqData.length };
-    rfqData.forEach((r) => {
+    const counts: Record<string, number> = { All: rfqs.length };
+    rfqs.forEach((r) => {
       counts[r.status] = (counts[r.status] || 0) + 1;
     });
     return counts;
@@ -102,21 +152,22 @@ const RFQManagement: React.FC = () => {
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-display font-bold text-text-primary">RFQ Management</h1>
           <span className="text-xs font-mono font-medium text-accent-primary bg-accent-primary/10 px-2.5 py-1 rounded-full border border-accent-primary/20">
-            {rfqData.length} RFQs
+            {rfqs.length} RFQs
           </span>
         </div>
         <div className="flex items-center gap-2.5">
           {/* Import from Email Button */}
           <button
-            onClick={() => setShowEmailImport(true)}
-            className="flex items-center gap-2 text-text-secondary border border-border text-sm font-body font-medium px-4 py-2.5 rounded-md hover:bg-bg-hover hover:text-text-primary hover:border-border-accent transition-all duration-150"
+            onClick={handleAutoImport}
+            disabled={isImporting}
+            className="flex items-center gap-2 text-text-secondary border border-border text-sm font-body font-medium px-4 py-2.5 rounded-md hover:bg-bg-hover hover:text-text-primary hover:border-border-accent transition-all duration-150 disabled:opacity-50"
           >
             <Mail size={16} />
-            Import from Email
+            {isImporting ? 'Importing...' : 'Import from Email'}
           </button>
           {/* New RFQ Button */}
           <button
-            onClick={() => setShowNewRFQ(true)}
+            onClick={() => navigate('/new-enquiry')}
             className="flex items-center gap-2 bg-accent-primary hover:bg-accent-secondary text-white text-sm font-body font-medium px-4 py-2.5 rounded-md transition-colors duration-150"
           >
             <Plus size={16} />
@@ -166,84 +217,62 @@ const RFQManagement: React.FC = () => {
         </select>
       </div>
 
-      {/* Table */}
-      <div className="bg-bg-tertiary border border-border rounded-md shadow-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-bg-secondary">
-                {['RFQ ID', 'Client Name', 'Material', 'Qty (MT)', 'Required By', 'Vendor Sent', 'Status', 'Created', 'Actions'].map((h) => (
-                  <th
-                    key={h}
-                    className={`text-[11px] font-body font-semibold text-text-muted uppercase tracking-[0.06em] px-4 py-3
-                      ${h === 'Qty (MT)' ? 'text-right' : 'text-left'}`}
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filteredRFQs.map((rfq, idx) => (
-                <tr
-                  key={rfq.id}
-                  className={`border-b border-border hover:bg-bg-hover transition-colors duration-150 ${
-                    idx % 2 === 0 ? 'bg-bg-tertiary' : 'bg-transparent'
-                  }`}
-                >
-                  <td className="px-4 py-3 text-xs font-mono text-text-muted">{rfq.id}</td>
-                  <td className="px-4 py-3 text-sm font-body font-medium text-text-primary">
-                    <div className="flex items-center gap-2">
-                      {rfq.client}
-                      {[0, 2, 5].includes(idx) && (
-                        <span className="flex items-center gap-1.5 text-[10px] font-body font-medium text-[#0066FF] bg-[#0066FF]/10 px-2 py-0.5 rounded border border-[#0066FF]/20">
-                          <span className="font-bold text-[#0066FF] tracking-wide">ZOHO</span>
-                        </span>
-                      )}
+      {/* Kanban Board */}
+      <div className="flex gap-4 overflow-x-auto pb-4 pt-2">
+        {isLoading ? (
+          <div className="w-full py-20 text-center text-sm font-body text-text-secondary">Loading RFQs...</div>
+        ) : error ? (
+          <div className="w-full py-4 text-center text-sm font-body text-status-danger">{error}</div>
+        ) : (
+          ['New', 'Sent', 'Responded', 'Converted'].map(status => {
+            const columnRFQs = filteredRFQs.filter(r => r.status === status);
+            return (
+              <div key={status} className="flex-shrink-0 w-80 bg-bg-secondary border border-border rounded-md flex flex-col h-[calc(100vh-280px)]">
+                <div className="p-3 border-b border-border flex items-center justify-between bg-bg-tertiary rounded-t-md shadow-sm">
+                  <h3 className="text-sm font-display font-semibold text-text-primary">{status}</h3>
+                  <span className="text-xs font-mono font-medium text-text-secondary bg-bg-primary px-2 py-0.5 rounded border border-border">
+                    {columnRFQs.length}
+                  </span>
+                </div>
+                <div className="p-3 flex-1 overflow-y-auto space-y-3">
+                  {columnRFQs.map(rfq => (
+                    <div key={rfq.id} className="bg-bg-primary border border-border rounded-md p-4 shadow-sm hover:border-accent-primary hover:shadow-md transition-all duration-150 cursor-pointer group">
+                      <div className="flex items-start justify-between mb-3">
+                        <span className="text-xs font-mono font-medium text-text-secondary group-hover:text-accent-primary transition-colors">{rfq.id}</span>
+                        <span className="text-[10px] font-body text-text-secondary bg-bg-secondary border border-border px-1.5 py-0.5 rounded">{getRelativeDate(rfq.created)}</span>
+                      </div>
+                      <h4 className="text-[15px] font-body font-semibold text-text-primary mb-1 line-clamp-1">{rfq.client}</h4>
+                      
+                      <div className="flex items-center gap-1.5 mb-4">
+                         <span className="text-[11px] font-body font-medium text-text-secondary bg-bg-secondary px-2 py-0.5 rounded-full">{rfq.material}</span>
+                         {isDateUrgent(rfq.requiredBy) && (
+                           <span className="text-[10px] font-body font-bold text-status-danger bg-status-danger/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Urgent</span>
+                         )}
+                      </div>
+
+                      <div className="flex items-end justify-between pt-3 border-t border-border border-dashed mt-auto">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-body text-text-muted uppercase tracking-wider mb-0.5">Quantity</span>
+                          <span className="text-sm font-mono font-bold text-text-primary">{rfq.quantity} <span className="text-[11px] text-text-secondary">MT</span></span>
+                        </div>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button className="w-7 h-7 flex items-center justify-center rounded bg-bg-secondary text-text-secondary hover:text-accent-primary transition-colors">
+                            <Eye size={14} />
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                  </td>
-                  <td className="px-4 py-3 text-sm font-body text-text-secondary">{rfq.material}</td>
-                  <td className="px-4 py-3 text-sm font-mono text-text-primary text-right">{rfq.quantity}</td>
-                  <td className={`px-4 py-3 text-sm font-body ${isDateUrgent(rfq.requiredBy) ? 'text-status-danger font-medium' : 'text-text-secondary'}`}>
-                    {rfq.requiredBy}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="text-xs font-body text-text-secondary bg-bg-secondary px-2 py-1 rounded-full">
-                      {rfq.vendorsSent} vendors
-                    </span>
-                  </td>
-                  <td className="px-4 py-3"><StatusBadge status={rfq.status} /></td>
-                  <td className="px-4 py-3 text-xs font-body text-text-secondary">{getRelativeDate(rfq.created)}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1">
-                      {[Eye, Edit, ArrowRightCircle].map((Icon, i) => (
-                        <button
-                          key={i}
-                          className="w-7 h-7 flex items-center justify-center rounded text-text-muted hover:text-text-primary hover:bg-bg-hover transition-colors duration-150"
-                          title={['View', 'Edit', 'Convert'][i]}
-                        >
-                          <Icon size={14} />
-                        </button>
-                      ))}
+                  ))}
+                  {columnRFQs.length === 0 && (
+                    <div className="h-20 flex flex-col items-center justify-center border-2 border-dashed border-border rounded-md mt-2">
+                      <span className="text-xs font-body text-text-muted">No items</span>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {/* Pagination */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-border">
-          <span className="text-xs font-body text-text-secondary">
-            Showing {filteredRFQs.length} of {rfqData.length} results
-          </span>
-          <div className="flex items-center gap-1">
-            <button className="px-3 py-1.5 text-xs font-body text-text-secondary border border-border rounded hover:bg-bg-hover transition-colors">Prev</button>
-            <button className="px-3 py-1.5 text-xs font-body text-white bg-accent-primary rounded">1</button>
-            <button className="px-3 py-1.5 text-xs font-body text-text-secondary border border-border rounded hover:bg-bg-hover transition-colors">2</button>
-            <button className="px-3 py-1.5 text-xs font-body text-text-secondary border border-border rounded hover:bg-bg-hover transition-colors">Next</button>
-          </div>
-        </div>
+                  )}
+                </div>
+              </div>
+            )
+          })
+        )}
       </div>
 
       {/* ── Import from Email Modal ── */}

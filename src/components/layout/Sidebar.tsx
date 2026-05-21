@@ -10,6 +10,11 @@ import {
   CalendarCheck,
   Mail,
   Zap,
+  Package,
+  Calculator,
+  Settings,
+  MessageCircle,
+  FilePlus,
 } from 'lucide-react';
 
 interface NavItem {
@@ -34,14 +39,23 @@ const navSections: NavSection[] = [
     title: 'OPERATIONS',
     items: [
       { label: 'RFQ Management', path: '/rfq', icon: FileText },
+      { label: 'New Enquiry', path: '/new-enquiry', icon: FilePlus },
       { label: 'Quotation Builder', path: '/quotations', icon: ClipboardList },
+      { label: 'Price Calculator', path: '/calculator', icon: Calculator },
       { label: 'Automations', path: '/automations', icon: Zap },
+    ],
+  },
+  {
+    title: 'MASTERS',
+    items: [
+      { label: 'Item Master', path: '/items', icon: Package },
     ],
   },
   {
     title: 'COMMUNICATIONS',
     items: [
       { label: 'Email & Messages', path: '/communications', icon: Mail },
+      { label: 'WhatsApp Generator', path: '/whatsapp', icon: MessageCircle },
     ],
   },
   {
@@ -61,6 +75,12 @@ const navSections: NavSection[] = [
     items: [
       { label: 'Logistics Tracking', path: '/logistics', icon: Truck },
       { label: 'Follow-up Tracker', path: '/followups', icon: CalendarCheck },
+    ],
+  },
+  {
+    title: 'ADMIN',
+    items: [
+      { label: 'Settings', path: '/settings', icon: Settings },
     ],
   },
 ];

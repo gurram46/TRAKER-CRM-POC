@@ -10,6 +10,11 @@ import LogisticsTracking from './pages/LogisticsTracking';
 import FollowupTracker from './pages/FollowupTracker';
 import Communications from './pages/Communications';
 import Automations from './pages/Automations';
+import ItemMaster from './pages/ItemMaster';
+import NewEnquiry from './pages/NewEnquiry';
+import PriceCalculator from './pages/PriceCalculator';
+import WhatsAppGenerator from './pages/WhatsAppGenerator';
+import AdminSettings from './pages/AdminSettings';
 
 const App: React.FC = () => {
   return (
@@ -24,6 +29,11 @@ const App: React.FC = () => {
         <Route path="/followups" element={<FollowupTracker />} />
         <Route path="/automations" element={<Automations />} />
         <Route path="/communications" element={<Communications />} />
+        <Route path="/items" element={<ItemMaster />} />
+        <Route path="/new-enquiry" element={<NewEnquiry />} />
+        <Route path="/calculator" element={<PriceCalculator />} />
+        <Route path="/whatsapp" element={<WhatsAppGenerator />} />
+        <Route path="/settings" element={<AdminSettings />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>
     </Routes>

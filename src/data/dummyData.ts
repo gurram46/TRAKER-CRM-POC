@@ -317,3 +317,24 @@ export const incomingEmails: IncomingEmail[] = [
     extractedRequiredBy: '2025-01-15',
   },
 ];
+
+// ── Masters Data — Items ──
+
+export interface Item {
+  code: string;
+  name: string;
+  category: string;
+  specification: string;
+  grade: string;
+  uom: string;
+}
+
+export const itemsData: Item[] = [
+  { code: 'ITM-001', name: 'HR Coil 2.5mm', category: 'HR Coil', specification: '2.5mm x 1250mm', grade: 'IS 2062 E250', uom: 'MT' },
+  { code: 'ITM-002', name: 'CR Sheet 1mm', category: 'CR Sheet', specification: '1.0mm x 1250mm x 2500mm', grade: 'IS 513 CRCA', uom: 'MT' },
+  { code: 'ITM-003', name: 'MS Pipe 4"', category: 'MS Pipe', specification: '4" NB Med', grade: 'IS 1239', uom: 'MT' },
+  { code: 'ITM-004', name: 'Angle 50x50x5', category: 'Angle Iron', specification: '50x50x5 mm', grade: 'IS 2062 E250A', uom: 'MT' },
+  { code: 'ITM-005', name: 'TMT Bar 12mm', category: 'TMT Bars', specification: '12mm', grade: 'Fe 500D', uom: 'MT' },
+  { code: 'ITM-006', name: 'TMT Bar 16mm', category: 'TMT Bars', specification: '16mm', grade: 'Fe 500D', uom: 'MT' },
+  { code: 'ITM-007', name: 'Chequered Plate 5mm', category: 'Chequered Plate', specification: '5mm x 1250mm x 2500mm', grade: 'IS 3502', uom: 'MT' },
+];
