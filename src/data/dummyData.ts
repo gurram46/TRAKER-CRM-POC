@@ -7,16 +7,30 @@ export const materials = [
 
 export type MaterialType = typeof materials[number];
 
-export interface RFQ {
-  id: string;
-  client: string;
-  contact: string;
+export interface RFQItem {
   material: MaterialType;
   quantity: number;
+  unit: string;
+}
+
+export interface RFQ {
+  id: string;
+  clientName: string;
+  company: string;
+  deliveryLocation: string;
+  contactNumber: string;
+  items: RFQItem[];
   requiredBy: string;
-  vendorsSent: number;
-  status: 'New' | 'Sent' | 'Responded' | 'Converted';
-  created: string;
+  specialRequirements: string;
+  status: 'New' | 'In Progress' | 'Quoted' | 'Closed';
+  source: 'Email — Auto Parsed' | 'Manual';
+  createdAt: string;
+  rfqType?: string;
+  approvedMakes?: string[];
+  certifications?: string[];
+  confidenceScore?: number;
+  paymentTerms?: string;
+  deliveryTerms?: string;
 }
 
 export const rfqData: RFQ[] = [

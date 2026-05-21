@@ -21,7 +21,7 @@ const RFQManagement: React.FC = () => {
   const [rfqs, setRfqs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isImporting, setIsImporting] = useState(false);
+  const [importState, setImportState] = useState<string | null>(null);
   const [selectedRFQ, setSelectedRFQ] = useState<any>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const navigate = useNavigate();
@@ -86,18 +86,23 @@ const RFQManagement: React.FC = () => {
   };
 
   const handleAutoImport = async () => {
-    setIsImporting(true);
+    setImportState('Checking Zoho inbox...');
+    await new Promise(r => setTimeout(r, 1500));
+    setImportState('AI extracting procurement data...');
+    await new Promise(r => setTimeout(r, 2000));
+    setImportState('Generating RFQ...');
+
     try {
       const result = await importFromEmail();
       const count = Array.isArray(result) ? result.length : 1;
-      setToastMessage(`✅ ${count} RFQ(s) imported from email`);
+      setImportState(null);
+      setToastMessage(`✅ ${count} RFQ(s) created successfully!`);
       setShowToast(true);
       await fetchRFQs();
     } catch (err: any) {
+      setImportState(null);
       setToastMessage('❌ Import failed: ' + err.message);
       setShowToast(true);
-    } finally {
-      setIsImporting(false);
     }
   };
 
@@ -191,14 +196,23 @@ const RFQManagement: React.FC = () => {
           </span>
         </div>
         <div className="flex items-center gap-2.5">
+          {/* Live AI Automation Badge */}
+          <div className="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.1)]">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+            <span className="text-[10px] font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 uppercase tracking-widest">Live AI Automation</span>
+          </div>
+
           {/* Import from Email Button */}
           <button
             onClick={handleAutoImport}
-            disabled={isImporting}
-            className="flex items-center gap-2 text-text-secondary border border-border text-sm font-body font-medium px-4 py-2.5 rounded-md hover:bg-bg-hover hover:text-text-primary hover:border-border-accent transition-all duration-150 disabled:opacity-50"
+            disabled={!!importState}
+            className="flex items-center gap-2 text-text-secondary border border-border text-sm font-body font-medium px-4 py-2.5 rounded-md hover:bg-bg-hover hover:text-text-primary hover:border-border-accent transition-all duration-150 disabled:opacity-50 relative overflow-hidden"
           >
             <Mail size={16} />
-            {isImporting ? 'Importing...' : 'Import from Email'}
+            {importState || 'Import from Email'}
+            {importState && (
+              <span className="absolute bottom-0 left-0 h-0.5 bg-accent-primary animate-[pulse_1s_ease-in-out_infinite] w-full"></span>
+            )}
           </button>
           {/* New RFQ Button */}
           <button
@@ -475,39 +489,110 @@ const RFQManagement: React.FC = () => {
       >
         {selectedRFQ && (
           <div className="space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <p className="text-[10px] font-body text-text-muted uppercase tracking-wider mb-1">Company</p>
-                <p className="text-sm font-body text-text-primary font-medium">{selectedRFQ.client}</p>
+            {/* Premium Header */}
+            <div className="bg-bg-tertiary border border-border rounded-lg p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4 pb-4 border-b border-border border-dashed">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-md bg-accent-primary/10 flex items-center justify-center border border-accent-primary/20">
+                    <span className="text-accent-primary font-bold font-display text-lg">{selectedRFQ.client.charAt(0)}</span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-display font-bold text-text-primary">{selectedRFQ.client}</h3>
+                    <p className="text-xs font-body text-text-secondary flex items-center gap-2 mt-0.5">
+                      <Clock size={12} className="text-text-muted" /> 
+                      Created on {new Date(selectedRFQ.created).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-display font-bold uppercase tracking-wider text-text-secondary bg-bg-primary px-3 py-1.5 rounded-full border border-border shadow-sm flex items-center gap-1.5">
+                    {selectedRFQ.source === 'email' ? <Mail size={12} className="text-accent-primary" /> : <Edit size={12} />}
+                    {selectedRFQ.source === 'email' ? 'Email — Auto Parsed' : selectedRFQ.source}
+                  </span>
+                </div>
               </div>
-              <div>
-                <p className="text-[10px] font-body text-text-muted uppercase tracking-wider mb-1">Contact Name</p>
-                <p className="text-sm font-body text-text-primary">{selectedRFQ.contactName || '—'}</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-body text-text-muted uppercase tracking-wider mb-1">Contact Number</p>
-                <p className="text-sm font-body text-text-primary">{selectedRFQ.contactNumber || '—'}</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-body text-text-muted uppercase tracking-wider mb-1">Delivery Location</p>
-                <p className="text-sm font-body text-text-primary">{selectedRFQ.deliveryLocation || '—'}</p>
+              <div className="grid grid-cols-3 gap-6">
+                 <div>
+                   <p className="text-[10px] font-body text-text-muted uppercase tracking-wider mb-1">Contact Name</p>
+                   <p className="text-sm font-body text-text-primary font-medium">{selectedRFQ.contactName || '—'}</p>
+                 </div>
+                 <div>
+                   <p className="text-[10px] font-body text-text-muted uppercase tracking-wider mb-1">Contact Number</p>
+                   <p className="text-sm font-body text-text-primary font-medium">{selectedRFQ.contactNumber || '—'}</p>
+                 </div>
+                 <div>
+                   <p className="text-[10px] font-body text-text-muted uppercase tracking-wider mb-1">Delivery Location</p>
+                   <p className="text-sm font-body text-text-primary font-medium">{selectedRFQ.deliveryLocation || '—'}</p>
+                 </div>
               </div>
             </div>
+            
+            {/* Enterprise Details Grid */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Classification & Commercial */}
+              <div className="bg-bg-primary border border-border rounded-lg p-4">
+                <h4 className="text-xs font-display font-bold text-text-secondary uppercase tracking-wider mb-3">Classification & Terms</h4>
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-xs text-text-muted inline-block w-24">Type:</span>
+                    <span className="text-sm font-medium text-text-primary bg-accent-primary/10 text-accent-primary px-2 py-0.5 rounded">{selectedRFQ.rfq_type || 'Simple RFQ'}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-text-muted inline-block w-24">Confidence:</span>
+                    <span className={`text-sm font-bold ${selectedRFQ.confidence_score >= 90 ? 'text-green-500' : selectedRFQ.confidence_score >= 70 ? 'text-yellow-500' : 'text-red-500'}`}>
+                      {selectedRFQ.confidence_score ? `${selectedRFQ.confidence_score}%` : 'N/A'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-text-muted inline-block w-24">Payment:</span>
+                    <span className="text-sm text-text-primary">{selectedRFQ.payment_terms || 'Not specified'}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-text-muted inline-block w-24">Delivery:</span>
+                    <span className="text-sm text-text-primary">{selectedRFQ.delivery_terms || 'Not specified'}</span>
+                  </div>
+                </div>
+              </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pb-4 border-b border-border">
-              <div>
-                <p className="text-[10px] font-body text-text-muted uppercase tracking-wider mb-1">Source</p>
-                <span className="text-xs font-body text-text-secondary bg-bg-secondary border border-border px-2 py-0.5 rounded capitalize">
-                  {selectedRFQ.source === 'email' ? 'Email — Auto Parsed' : selectedRFQ.source}
-                </span>
-              </div>
-              <div>
-                <p className="text-[10px] font-body text-text-muted uppercase tracking-wider mb-1">Created Date</p>
-                <p className="text-sm font-body text-text-primary">{new Date(selectedRFQ.created).toLocaleDateString()}</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-body text-text-muted uppercase tracking-wider mb-1">Required By</p>
-                <p className="text-sm font-body text-text-primary">{selectedRFQ.requiredBy !== 'N/A' ? new Date(selectedRFQ.requiredBy).toLocaleDateString() : 'N/A'}</p>
+              {/* Compliance & Makes */}
+              <div className="bg-bg-primary border border-border rounded-lg p-4">
+                <h4 className="text-xs font-display font-bold text-text-secondary uppercase tracking-wider mb-3">Compliance & Sourcing</h4>
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-xs text-text-muted block mb-1">Approved Makes:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedRFQ.approved_makes && selectedRFQ.approved_makes.length > 0 ? (
+                        selectedRFQ.approved_makes.map((make: string, i: number) => (
+                          <span key={i} className="text-xs font-medium bg-border/50 text-text-primary px-2 py-0.5 rounded-full border border-border">
+                            {make}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-sm text-text-secondary">Open to all primary makes</span>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-xs text-text-muted block mb-1">Certifications Required:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedRFQ.certifications && selectedRFQ.certifications.length > 0 ? (
+                        selectedRFQ.certifications.map((cert: string, i: number) => (
+                          <span key={i} className="text-xs font-bold bg-red-500/10 text-red-500 px-2 py-0.5 rounded border border-red-500/20">
+                            {cert}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-sm text-text-secondary">Standard</span>
+                      )}
+                    </div>
+                  </div>
+                  {selectedRFQ.special_requirements && (
+                    <div>
+                       <span className="text-xs text-text-muted block mb-1">Special Notes:</span>
+                       <p className="text-sm text-text-primary italic border-l-2 border-accent-primary pl-2">{selectedRFQ.special_requirements}</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 

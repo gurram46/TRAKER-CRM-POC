@@ -18,12 +18,12 @@ const QuotationBuilder: React.FC = () => {
   const location = useLocation();
   const rfq = location.state?.rfq;
 
-  const [clientName, setClientName] = useState(rfq?.client || '');
+  const [clientName, setClientName] = useState(rfq?.clientName || rfq?.client || '');
   const [clientContact, setClientContact] = useState(rfq?.contactNumber || '');
   const [clientEmail, setClientEmail] = useState('');
   const [clientAddress, setClientAddress] = useState(rfq?.deliveryLocation || '');
-  const [material, setMaterial] = useState(rfq?.material || '');
-  const [quantity, setQuantity] = useState<number>(rfq?.quantity || 0);
+  const [material, setMaterial] = useState(rfq?.items?.[0]?.material_type || rfq?.items?.[0]?.material || '');
+  const [quantity, setQuantity] = useState<number>(rfq?.items?.[0]?.quantity_mt || rfq?.items?.[0]?.quantity || 0);
   const [basePrice, setBasePrice] = useState<number>(0);
   const [gstPercent, setGstPercent] = useState<number>(18);
   const [freight, setFreight] = useState<number>(0);
@@ -60,15 +60,24 @@ const QuotationBuilder: React.FC = () => {
     // Header
     doc.setFillColor(17, 19, 24);
     doc.rect(0, 0, pageW, 45, 'F');
+    
+    // Logo Placeholder
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(20, 10, 25, 25, 3, 3, 'F');
+    doc.setTextColor(17, 19, 24);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text('LOGO', 24, 24);
+
     doc.setTextColor(241, 245, 249);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
-    doc.text('OMNIA STEELS PVT LTD', 20, 20);
+    doc.text('OMNIA STEELS PVT LTD', 55, 20);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(148, 163, 184);
-    doc.text('Attapur, Hyderabad, Telangana | GST: 36AABCO1234F1Z5', 20, 28);
-    doc.text('Phone: +91 98765 43210 | Email: info@omniasteels.com', 20, 34);
+    doc.text('Attapur, Hyderabad, Telangana | GST: 36AABCO1234F1Z5', 55, 28);
+    doc.text('Phone: +91 98765 43210 | Email: info@omniasteels.com', 55, 34);
 
     // QUOTATION badge
     doc.setTextColor(59, 130, 246);
@@ -108,6 +117,9 @@ const QuotationBuilder: React.FC = () => {
     // Table header
     doc.setFillColor(241, 245, 249);
     doc.rect(20, y - 5, pageW - 40, 10, 'F');
+    doc.setDrawColor(200, 200, 200);
+    doc.rect(20, y - 5, pageW - 40, 10, 'S'); // border
+
     doc.setTextColor(71, 85, 105);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
@@ -118,6 +130,7 @@ const QuotationBuilder: React.FC = () => {
     y += 12;
 
     // Table row
+    doc.rect(20, y - 7, pageW - 40, 15, 'S'); // border
     doc.setTextColor(30, 41, 59);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
@@ -152,6 +165,20 @@ const QuotationBuilder: React.FC = () => {
     doc.line(120, y, pageW - 20, y);
     y += 8;
     addTotal('TOTAL:', formatINR(calc.total), true);
+
+    // Signature
+    y += 20;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(30, 41, 59);
+    doc.text('For Omnia Steels Pvt Ltd', pageW - 20, y, { align: 'right' });
+    y += 15;
+    doc.setDrawColor(30, 41, 59);
+    doc.line(pageW - 70, y, pageW - 20, y);
+    y += 5;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text('Authorized Signatory', pageW - 20, y, { align: 'right' });
 
     // Footer
     y += 15;
@@ -228,7 +255,15 @@ const QuotationBuilder: React.FC = () => {
 
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-display font-bold text-text-primary">Quotation Builder</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-display font-bold text-text-primary">Quotation Builder</h1>
+        {rfq && (
+          <span className="flex items-center gap-1.5 px-3 py-1 bg-accent-primary/10 border border-accent-primary/20 rounded-full text-xs font-body font-medium text-accent-primary shadow-sm">
+            <Mail size={14} />
+            Generated from AI-imported RFQ
+          </span>
+        )}
+      </div>
 
       <div className="grid grid-cols-[1.2fr_1fr] gap-5">
         {/* Left — Form */}

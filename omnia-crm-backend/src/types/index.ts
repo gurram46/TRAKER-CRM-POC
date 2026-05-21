@@ -12,9 +12,17 @@ export interface RFQ {
   source: string;
   raw_email?: string;
   created_at?: Date;
+  rfq_type?: string;
+  approved_makes?: string[];
+  certifications?: string[];
+  confidence_score?: number;
+  payment_terms?: string;
+  delivery_terms?: string;
 }
 
 export interface ExtractedEmailData {
+  rfq_type: string;
+  confidence_score: number;
   client_name: string;
   contact_number: string;
   company: string;
@@ -31,6 +39,8 @@ export interface ExtractedEmailData {
   }[];
   required_by: string;
   special_requirements: string;
+  approved_makes: string[];
+  certifications: string[];
   payment_terms?: string;
   delivery_terms?: string;
 }

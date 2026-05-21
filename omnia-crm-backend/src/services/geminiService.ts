@@ -6,143 +6,52 @@ export const extractRFQFromEmail = async (emailContent: string): Promise<Extract
 
 Your job is to parse raw RFQ/procurement emails and convert them into structured JSON for quotation generation.
 
-SUPPORTED RFQ TYPES:
-* Simple RFQ emails
-* Enterprise procurement templates
-* HTML table emails
-* Semi-structured procurement mails
-* Plain text procurement requests
+CLASSIFY RFQ TYPE:
+Analyze the text and classify "rfq_type" into exactly one of these:
+* "Simple RFQ" - Basic list of materials
+* "Enterprise Techno-Commercial RFQ" - Contains complex T&C, approved makes lists, GST/freight scopes (e.g. L&T SUFIN formats)
+* "Rail/Inspection RFQ" - Focuses on Rails, MTC, RITES inspection, yield strength
 
-CORE TASKS:
-1. Extract buyer/company/contact details
-2. Detect project name
-3. Detect delivery location
-4. Extract all material line items
-5. Normalize steel material names
-6. Detect grades/specifications
-7. Detect special compliance requirements
-8. Detect payment/delivery terms
-9. Return clean structured JSON
+MATERIAL NORMALIZATION RULES (STRICT):
+You MUST normalize material descriptions into these exact shorthand formats.
+Always round the MT quantity to the nearest higher whole number (e.g. 1.3mt -> 2mt, 12.6mt -> 13mt, 124.07 -> 125mt) EXCEPT for Rails where you preserve exact metric tons.
 
-MATERIAL NORMALIZATION RULES:
+* PLATES: "MS PLATE 12mm width 2.5mtr lenth 6.3mtr -1.480 mt" -> "P12mm, 2500x6300 -2mt"
+* ANGLES: "MS Angle 50x50x6mm -6.3mt" -> "A50x6 -7mt"
+* BEAMS: "MS Beam or ISMB 250x125x6mm -8.9mt" -> "B250 -9mt"
+* CHANNELS: "MS Channel or ISMc 100x50x5mm -19.2mt" -> "C100 -20mt"
+* FLATS: "MS Flat 100x6mm -1.2mt" -> "F100x6 -2mt"
+* RHS/SHS/PIPES: "RHS 240X120X8 YST310 - 2.9mt" -> "240x120x8mm -3mt"
+* ROUND BARS: "MS Round Bar 12mm -35.2mt" -> "Round 12mm -36mt"
+* SQUARE BARS: "MS Square Bar 12x12mm -5.8mt" -> "Sq 12x12 -6mt"
+* BINDING WIRE (MS): "Binding wire 16/18/20SWG" -> "MS Binding Wire 16G/18G/202G -[qty]mt"
+* BINDING WIRE (GI): If GSM is given (e.g. 20-30 GSM), mention it: "GI Binding Wire 16G/18G/202G, 20-30 GSM -[qty]mt"
+* RAILS: "RAIL; SUB-TYPE :- Industrial Use (IU) Rail; GRADE :- 880" -> "Rail 880 IU - [qty]mt"
 
-PLATES:
-* MS Plate / MS Chequered Plate
-* Output format: "P[thickness]mm - [qty]mt"
-Examples:
-* MS Plate 12mm → P12mm - 6mt
-* MS Chequered Plate 6mm → P6mm - 95mt
+GRADE NORMALIZATION:
+Always mention grade. If it's standard E250, use "E250". If E350 is given, use E350A/BR etc.
 
-ANGLES:
-* MS Angle / ISA
-* Output format: "A[size]x[thickness] - [qty]mt"
-Examples:
-* ISA 70x70x6 → A70x6 - 35mt
-* Angle 50x50x6 → A50x6 - 20mt
-
-BEAMS:
-* ISMB / MS Beam / UB
-* Output format: "B[size] - [qty]mt"
-Examples:
-* ISMB 250 → B250 - 9mt
-
-CHANNELS:
-* ISMC / MS Channel
-* Output format: "C[size] - [qty]mt"
-Examples:
-* ISMC 100 → C100 - 5mt
-
-FLATS:
-* MS Flat
-* Output format: "F[width]x[thickness] - [qty]mt"
-Examples:
-* Flat 100x6 → F100x6 - 2mt
-
-HOLLOW SECTIONS:
-* RHS / SHS / Hollow Section / Pipe
-* Output format: "[dimensions]mm - [qty]mt"
-Examples:
-* RHS 240x120x8 → 240x120x8mm - 3mt
-* SHS 100x100x6 → 100x100x6mm - 2mt
-
-ROUND BAR:
-* Output format: "Round [dia]mm - [qty]mt"
-Examples:
-* Round Bar 12mm → Round 12mm - 5mt
-
-TMT:
-* Output format: "TMT [dia]mm [grade] - [qty]mt"
-Examples:
-* TMT 16mm Fe500D → TMT 16mm Fe500D - 12mt
-
-RAILS:
-* Output format: "Rail [grade] [section] - [qty]mt"
-Examples:
-* Industrial Use Rail 880 → Rail 880 IU - 299mt
-
-GI / BINDING WIRE:
-* Output format: "GI Wire [gsm/gauge] - [qty]mt"
-Examples:
-* GI Binding Wire 16G 40GSM → GI Wire 16G 40GSM - 1mt
-
-GRADE DETECTION:
-Detect and normalize:
-* E250
-* E250A
-* E250BR
-* E350
-* YST310
-* Fe500
-* Fe500D
-* IS2062
-* IS1786
-
-IMPORTANT PROCESSING RULES:
-* Convert quantities into decimal MT values
-* Preserve original description separately
-* Detect IS standards/specifications
-* Detect certifications:
-  * MTC
-  * RITES
-  * NABL
-  * Third-party inspection
-* Detect delivery terms:
-  * FOR Site
-  * Ex-Works
-  * Delivered
-* Detect payment terms
-* Detect lead times
-* Detect urgency
-* Detect project/location names
-* Detect approved makes/brands
-* Preserve buyer notes in remarks
-* Remove duplicate spaces/symbols
-* Normalize dimensions consistently
-
-SPECIAL REQUIREMENTS DETECTION:
-Extract separately:
-* MTC mandatory
-* RITES inspection mandatory
-* Approved make only
-* Primary material only
-* GST requirements
-* MSME requirements
-* ESG requirements
-* ABMS compliance
-* Vendor registration requirements
+EXTRACTION GOALS:
+1. Extract buyer, company, and contact details.
+2. Detect project name and delivery location.
+3. Extract and normalize all material line items.
+4. Extract "approved_makes" (e.g. Surya pipes, HI Tech pipes, JSW, Tata, SAIL, VMC, APL Apollo).
+5. Extract "certifications" (e.g. MTC, RITES inspection).
+6. Extract "payment_terms" and "delivery_terms".
+7. Assign a "confidence_score" (0-100) based on how well you understood the email.
 
 OUTPUT RULES:
 * Return ONLY valid JSON
-* No markdown
-* No explanation
-* No extra text
-* Empty values must use ""
+* No markdown, no explanation, no extra text
+* Empty arrays should be []
+* Empty strings should be ""
 * Missing numeric values use 0.0
-* Always return valid parsable JSON
 
 OUTPUT FORMAT:
 {
-  "client_name": "person name from signature",
+  "rfq_type": "Simple RFQ | Enterprise Techno-Commercial RFQ | Rail/Inspection RFQ",
+  "confidence_score": 95,
+  "client_name": "person name from signature or text",
   "company": "company name",
   "contact_number": "phone number",
   "delivery_location": "delivery city or address",
@@ -150,22 +59,24 @@ OUTPUT FORMAT:
   "project_name": "project name if mentioned",
   "items": [
     {
-      "material_type": "normalized material name",
+      "material_type": "STRICTLY NORMALIZED SHORTHAND (e.g. P12mm, 2500x6300 -2mt)",
       "original_description": "original text from email",
-      "grade": "steel grade",
-      "specification": "IS standard or dimensions",
-      "quantity_mt": 0.0,
+      "grade": "steel grade (e.g. E250)",
+      "specification": "dimensions or IS standard",
+      "quantity_mt": 2,
       "uom": "MT",
-      "remarks": "special requirements/certifications"
+      "remarks": "special requirements per item"
     }
   ],
   "special_requirements": "combined special requirements",
-  "payment_terms": "payment terms if mentioned",
-  "delivery_terms": "FOR site, ex-works etc"
+  "approved_makes": ["JSW", "Tata", "SAIL"],
+  "certifications": ["MTC", "RITES"],
+  "payment_terms": "extracted payment terms",
+  "delivery_terms": "extracted delivery terms"
 }
 
 INPUT EMAIL:
-\${emailContent}`;
+${emailContent}`;
 
   const callGemini = async (apiKey: string) => {
     const genAI = new GoogleGenerativeAI(apiKey);

@@ -31,8 +31,8 @@ export const startEmailPolling = () => {
           const requiredByDate = extractedData.required_by && extractedData.required_by.trim() !== '' ? new Date(extractedData.required_by) : null;
           
           const insertResult = await query(
-            `INSERT INTO rfqs (rfq_number, client_name, company, delivery_location, contact_number, items, required_by, special_requirements, source, raw_email) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+            `INSERT INTO rfqs (rfq_number, client_name, company, delivery_location, contact_number, items, required_by, special_requirements, source, raw_email, rfq_type, approved_makes, certifications, confidence_score, payment_terms, delivery_terms) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *`,
             [
               rfq_number, 
               extractedData.client_name, 
@@ -43,7 +43,13 @@ export const startEmailPolling = () => {
               requiredByDate, 
               extractedData.special_requirements, 
               'email', 
-              content
+              content,
+              extractedData.rfq_type || 'Simple RFQ',
+              JSON.stringify(extractedData.approved_makes || []),
+              JSON.stringify(extractedData.certifications || []),
+              extractedData.confidence_score || 80,
+              extractedData.payment_terms || null,
+              extractedData.delivery_terms || null
             ]
           );
           
@@ -60,5 +66,5 @@ export const startEmailPolling = () => {
     } catch (error) {
       console.error('Error during email polling:', error);
     }
-  }, 2 * 60 * 1000); // 2 minutes
+  }, 15 * 1000); // 15 seconds
 };
