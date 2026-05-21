@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Download, Save, Mail, Send, FileText, Loader2, X, Paperclip } from 'lucide-react';
 import { materials } from '../data/dummyData';
 import Modal from '../components/ui/Modal';
@@ -9,17 +10,20 @@ import jsPDF from 'jspdf';
 const gstOptions = [5, 12, 18];
 
 const formatINR = (n: number) => {
-  if (!n || isNaN(n)) return '₹0';
-  return '₹' + n.toLocaleString('en-IN');
+  if (!n || isNaN(n)) return 'Rs. 0';
+  return 'Rs. ' + n.toLocaleString('en-IN');
 };
 
 const QuotationBuilder: React.FC = () => {
-  const [clientName, setClientName] = useState('');
-  const [clientContact, setClientContact] = useState('');
+  const location = useLocation();
+  const rfq = location.state?.rfq;
+
+  const [clientName, setClientName] = useState(rfq?.client || '');
+  const [clientContact, setClientContact] = useState(rfq?.contactNumber || '');
   const [clientEmail, setClientEmail] = useState('');
-  const [clientAddress, setClientAddress] = useState('');
-  const [material, setMaterial] = useState('');
-  const [quantity, setQuantity] = useState<number>(0);
+  const [clientAddress, setClientAddress] = useState(rfq?.deliveryLocation || '');
+  const [material, setMaterial] = useState(rfq?.material || '');
+  const [quantity, setQuantity] = useState<number>(rfq?.quantity || 0);
   const [basePrice, setBasePrice] = useState<number>(0);
   const [gstPercent, setGstPercent] = useState<number>(18);
   const [freight, setFreight] = useState<number>(0);
@@ -109,8 +113,8 @@ const QuotationBuilder: React.FC = () => {
     doc.setFontSize(9);
     doc.text('Material', 25, y);
     doc.text('Qty (MT)', 90, y);
-    doc.text('Rate (\u20b9/MT)', 120, y);
-    doc.text('Amount (\u20b9)', pageW - 25, y, { align: 'right' });
+    doc.text('Rate (Rs./MT)', 120, y);
+    doc.text('Amount (Rs.)', pageW - 25, y, { align: 'right' });
     y += 12;
 
     // Table row
@@ -119,7 +123,7 @@ const QuotationBuilder: React.FC = () => {
     doc.setFontSize(10);
     doc.text(material || '\u2014', 25, y);
     doc.text(quantity.toString(), 90, y);
-    doc.text(formatINR(basePrice).replace('\u20b9', ''), 120, y);
+    doc.text(formatINR(basePrice).replace('Rs. ', ''), 120, y);
     doc.text(formatINR(calc.materialCost), pageW - 25, y, { align: 'right' });
     y += 15;
 
@@ -268,7 +272,7 @@ const QuotationBuilder: React.FC = () => {
                 <input value={quantity || ''} onChange={(e) => setQuantity(Number(e.target.value))} type="number" className="w-full bg-bg-primary border border-border rounded-md py-2.5 px-3 text-sm font-mono text-text-primary" placeholder="0" />
               </div>
               <div>
-                <label className="block text-xs font-body font-medium text-text-secondary mb-1.5">Base Price per MT (₹)</label>
+                <label className="block text-xs font-body font-medium text-text-secondary mb-1.5">Base Price per MT (Rs.)</label>
                 <input value={basePrice || ''} onChange={(e) => setBasePrice(Number(e.target.value))} type="number" className="w-full bg-bg-primary border border-border rounded-md py-2.5 px-3 text-sm font-mono text-text-primary" placeholder="0" />
               </div>
               <div>
@@ -278,7 +282,7 @@ const QuotationBuilder: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-body font-medium text-text-secondary mb-1.5">Freight Charges (₹)</label>
+                <label className="block text-xs font-body font-medium text-text-secondary mb-1.5">Freight Charges (Rs.)</label>
                 <input value={freight || ''} onChange={(e) => setFreight(Number(e.target.value))} type="number" className="w-full bg-bg-primary border border-border rounded-md py-2.5 px-3 text-sm font-mono text-text-primary" placeholder="0" />
               </div>
               <div>

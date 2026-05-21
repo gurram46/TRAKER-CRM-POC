@@ -465,7 +465,7 @@ const RFQManagement: React.FC = () => {
               Close
             </button>
             <button
-              onClick={() => navigate('/quotations')}
+              onClick={() => navigate('/quotations', { state: { rfq: selectedRFQ } })}
               className="px-4 py-2 text-sm font-body font-medium text-white bg-accent-primary hover:bg-accent-secondary rounded-md transition-colors"
             >
               Create Quotation
