@@ -63,7 +63,7 @@ const QuotationBuilder: React.FC = () => {
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(148, 163, 184);
-    doc.text('Attapur, Hyderabad, Telangana | GST: 36AABCO1234F1ZA', 20, 28);
+    doc.text('Attapur, Hyderabad, Telangana | GST: 36AABCO1234F1Z5', 20, 28);
     doc.text('Phone: +91 98765 43210 | Email: info@omniasteels.com', 20, 34);
 
     // QUOTATION badge
@@ -154,6 +154,8 @@ const QuotationBuilder: React.FC = () => {
     doc.setTextColor(148, 163, 184);
     doc.setFont('helvetica', 'italic');
     doc.setFontSize(8);
+    doc.text('Thank you for your business!', 20, y);
+    y += 6;
     doc.text('Terms: Payment within 7 days. Prices subject to market fluctuations.', 20, y);
     doc.text('This is a system-generated quotation from Omnia Steels CRM.', 20, y + 5);
 
@@ -346,7 +348,7 @@ const QuotationBuilder: React.FC = () => {
                   <div>
                     <p className="text-white font-bold text-sm">OMNIA STEELS PVT LTD</p>
                     <p className="text-gray-400 text-[9px] mt-0.5">Attapur, Hyderabad, Telangana</p>
-                    <p className="text-gray-400 text-[9px]">GST: 36AABCO1234F1ZA</p>
+                    <p className="text-gray-400 text-[9px]">GST: 36AABCO1234F1Z5</p>
                   </div>
                   <div className="text-right">
                     <p className="text-blue-400 font-bold text-xs">QUOTATION</p>

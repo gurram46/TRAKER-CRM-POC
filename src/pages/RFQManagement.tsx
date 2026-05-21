@@ -33,16 +33,25 @@ const RFQManagement: React.FC = () => {
     setError(null);
     try {
       const data = await getAllRFQs();
-      const mapped = data.map((d: any) => ({
-        id: d.rfq_number,
-        client: d.client_name || 'Unknown',
-        material: d.material_type || 'Unknown',
-        quantity: d.quantity_mt || '0',
-        requiredBy: d.required_by ? new Date(d.required_by).toISOString().split('T')[0] : 'N/A',
-        vendorsSent: 0,
-        status: d.status || 'New',
-        created: d.created_at
-      }));
+      const mapped = data.map((d: any) => {
+        const items = d.items || [];
+        const firstMaterial = items.length > 0 ? items[0].material_type : (d.material_type || 'Steel Enquiry');
+        const totalQty = items.length > 0 
+          ? items.reduce((sum: number, it: any) => sum + (Number(it.quantity_mt) || 0), 0)
+          : (d.quantity_mt || 0);
+        return {
+          id: d.rfq_number,
+          client: d.company || d.client_name || 'Unknown',
+          material: firstMaterial,
+          quantity: totalQty,
+          itemCount: items.length,
+          requiredBy: d.required_by ? new Date(d.required_by).toISOString().split('T')[0] : 'N/A',
+          vendorsSent: 0,
+          status: d.status || 'New',
+          created: d.created_at,
+          deliveryLocation: d.delivery_location || ''
+        };
+      });
       setRfqs(mapped);
     } catch (err: any) {
       setError(err.message);
@@ -54,12 +63,13 @@ const RFQManagement: React.FC = () => {
   const handleAutoImport = async () => {
     setIsImporting(true);
     try {
-      await importFromEmail();
-      setToastMessage('Successfully imported RFQs from email');
+      const result = await importFromEmail();
+      const count = Array.isArray(result) ? result.length : 1;
+      setToastMessage(`✅ ${count} RFQ(s) imported from email`);
       setShowToast(true);
-      fetchRFQs();
+      await fetchRFQs();
     } catch (err: any) {
-      setToastMessage('Error importing emails: ' + err.message);
+      setToastMessage('❌ Import failed: ' + err.message);
       setShowToast(true);
     } finally {
       setIsImporting(false);
@@ -89,7 +99,7 @@ const RFQManagement: React.FC = () => {
       );
     }
     return data;
-  }, [activeTab, searchQuery]);
+  }, [activeTab, searchQuery, rfqs]);
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = { All: rfqs.length };
@@ -97,7 +107,7 @@ const RFQManagement: React.FC = () => {
       counts[r.status] = (counts[r.status] || 0) + 1;
     });
     return counts;
-  }, []);
+  }, [rfqs]);
 
   const isDateUrgent = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -243,8 +253,11 @@ const RFQManagement: React.FC = () => {
                       </div>
                       <h4 className="text-[15px] font-body font-semibold text-text-primary mb-1 line-clamp-1">{rfq.client}</h4>
                       
-                      <div className="flex items-center gap-1.5 mb-4">
-                         <span className="text-[11px] font-body font-medium text-text-secondary bg-bg-secondary px-2 py-0.5 rounded-full">{rfq.material}</span>
+                      <div className="flex items-center gap-1.5 flex-wrap mb-4">
+                         <span className="text-[11px] font-body font-medium text-text-secondary bg-bg-secondary px-2 py-0.5 rounded-full line-clamp-1 max-w-[180px]">{rfq.material}</span>
+                         {rfq.itemCount > 1 && (
+                           <span className="text-[10px] font-mono font-medium text-accent-primary bg-accent-primary/10 px-1.5 py-0.5 rounded">+{rfq.itemCount - 1} items</span>
+                         )}
                          {isDateUrgent(rfq.requiredBy) && (
                            <span className="text-[10px] font-body font-bold text-status-danger bg-status-danger/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Urgent</span>
                          )}
