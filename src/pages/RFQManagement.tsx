@@ -53,7 +53,8 @@ const RFQManagement: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getAllRFQs();
+      const response = await getAllRFQs();
+      const data = Array.isArray(response) ? response : (response?.data || response?.rfqs || []);
       const mapped = data.map((d: any) => {
         const items = d.items || [];
         const firstMaterial = items.length > 0 ? items[0].material_type : (d.material_type || 'Steel Enquiry');
@@ -74,7 +75,13 @@ const RFQManagement: React.FC = () => {
           status: d.status || 'New',
           created: d.created_at,
           deliveryLocation: d.delivery_location || '',
-          source: d.source || 'Manual'
+          source: d.source || 'Manual',
+          rfqType: d.rfq_type,
+          approvedMakes: d.approved_makes,
+          certifications: d.certifications,
+          confidenceScore: d.confidence_score,
+          paymentTerms: d.payment_terms,
+          deliveryTerms: d.delivery_terms
         };
       });
       setRfqs(mapped);

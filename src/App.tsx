@@ -1,10 +1,14 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import AppShell from './components/layout/AppShell';
+import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 import RFQManagement from './pages/RFQManagement';
 import QuotationBuilder from './pages/QuotationBuilder';
 import VendorManagement from './pages/VendorManagement';
+import Vendors from './pages/Vendors';
+import Quotations from './pages/Quotations';
+import TransporterMaster from './pages/TransporterMaster';
 import PaymentTracking from './pages/PaymentTracking';
 import LogisticsTracking from './pages/LogisticsTracking';
 import FollowupTracker from './pages/FollowupTracker';
@@ -19,11 +23,15 @@ import AdminSettings from './pages/AdminSettings';
 const App: React.FC = () => {
   return (
     <Routes>
+      <Route path="/login" element={<LoginPage />} />
       <Route element={<AppShell />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/rfq" element={<RFQManagement />} />
-        <Route path="/quotations" element={<QuotationBuilder />} />
-        <Route path="/vendors" element={<VendorManagement />} />
+        <Route path="/quotations" element={<Quotations />} />
+        <Route path="/quotation-builder" element={<QuotationBuilder />} />
+        <Route path="/contacts" element={<VendorManagement />} />
+        <Route path="/vendors" element={<Vendors />} />
+        <Route path="/transporters" element={<TransporterMaster />} />
         <Route path="/payments" element={<PaymentTracking />} />
         <Route path="/logistics" element={<LogisticsTracking />} />
         <Route path="/followups" element={<FollowupTracker />} />
