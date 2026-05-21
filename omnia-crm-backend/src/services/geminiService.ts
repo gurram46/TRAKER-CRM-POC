@@ -2,9 +2,6 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ExtractedEmailData } from '../types';
 
 export const extractRFQFromEmail = async (emailContent: string): Promise<ExtractedEmailData> => {
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-  const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
-  
   const prompt = `You are a data extraction assistant for a steel trading company in India. Extract ALL information from this email and return ONLY a valid JSON object with no markdown, no backticks:
 {
   "client_name": "company or person name",
@@ -23,9 +20,26 @@ export const extractRFQFromEmail = async (emailContent: string): Promise<Extract
   "special_requirements": "any other notes"
 }
 Extract ALL line items from tables. Email content: ${emailContent}`;
+
+  const callGemini = async (apiKey: string) => {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+    const result = await model.generateContent(prompt);
+    return result.response.text();
+  };
+
+  let responseText = "";
+  try {
+    responseText = await callGemini(process.env.GEMINI_API_KEY || '');
+  } catch (err: any) {
+    if (err.status === 429 || err.message?.includes('429') || err.message?.includes('Too Many Requests')) {
+      console.log("Primary Gemini API key rate limited, using fallback...");
+      responseText = await callGemini('AIzaSyCJOMKHRLuPcrLRB0mM102FEoHmRdBcudw');
+    } else {
+      throw err;
+    }
+  }
   
-  const result = await model.generateContent(prompt);
-  const responseText = result.response.text();
   console.log("Raw Gemini Response:", responseText);
   
   try {
