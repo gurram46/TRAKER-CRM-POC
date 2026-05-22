@@ -120,21 +120,30 @@ export const sendZohoEmail = async (payload: ZohoSendPayload) => {
   const uploadedAttachments = [];
   for (const attachment of payload.attachments || []) {
     const fileBuffer = Buffer.from(attachment.base64, 'base64');
-    const uploadUrl = `${domain}/accounts/${accountId}/messages/attachments?fileName=${encodeURIComponent(attachment.fileName)}&isInline=false`;
-    const formData = new FormData();
-    formData.append(
-      'attach',
-      new Blob([fileBuffer], { type: attachment.contentType || 'application/octet-stream' }),
-      attachment.fileName
+    if (fileBuffer.length === 0) {
+      throw new Error(`Attachment ${attachment.fileName} is empty before upload.`);
+    }
+
+    const uploadUrl = `${domain}/accounts/${accountId}/messages/attachments?uploadType=multipart&isInline=false`;
+    const boundary = `----omnia-crm-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const multipartHead = Buffer.from(
+      `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="attach"; filename="${attachment.fileName.replace(/"/g, '')}"\r\n` +
+        `Content-Type: ${attachment.contentType || 'application/octet-stream'}\r\n\r\n`,
+      'utf8'
     );
+    const multipartTail = Buffer.from(`\r\n--${boundary}--\r\n`, 'utf8');
+    const multipartBody = Buffer.concat([multipartHead, fileBuffer, multipartTail]);
 
     const uploadResponse = await fetch(uploadUrl, {
       method: 'POST',
       headers: {
         Authorization: `Zoho-oauthtoken ${token}`,
+        'Content-Type': `multipart/form-data; boundary=${boundary}`,
+        'Content-Length': String(multipartBody.length),
         Accept: 'application/json',
       },
-      body: formData,
+      body: multipartBody,
     });
 
     const uploadText = await uploadResponse.text();
