@@ -6,6 +6,10 @@ export interface ZohoMessageRef {
   folderId?: string;
   receivedTime?: string | number;
   createdTime?: string | number;
+  subject?: string;
+  sender?: string;
+  fromAddress?: string;
+  summary?: string;
 }
 
 let schemaReady: Promise<void> | null = null;
@@ -16,7 +20,11 @@ export const ensureEmailImportSchema = async () => {
       await query(`
         ALTER TABLE rfqs
         ADD COLUMN IF NOT EXISTS source_message_id TEXT,
-        ADD COLUMN IF NOT EXISTS source_received_at TIMESTAMP
+        ADD COLUMN IF NOT EXISTS source_received_at TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS source_subject TEXT,
+        ADD COLUMN IF NOT EXISTS source_sender TEXT,
+        ADD COLUMN IF NOT EXISTS source_from_address TEXT,
+        ADD COLUMN IF NOT EXISTS source_summary TEXT
       `);
 
       await query(`
@@ -43,6 +51,28 @@ export const getMessageReceivedDate = (msg: ZohoMessageRef) => {
 export const findRFQBySourceMessageId = async (sourceMessageId: string) => {
   await ensureEmailImportSchema();
   const result = await query('SELECT * FROM rfqs WHERE source_message_id = $1 LIMIT 1', [sourceMessageId]);
+  return result.rows[0] || null;
+};
+
+export const updateRFQSourceMetadata = async (rfqId: number, message: ZohoMessageRef) => {
+  await ensureEmailImportSchema();
+  const result = await query(
+    `UPDATE rfqs
+     SET source_subject = COALESCE(source_subject, $1),
+         source_sender = COALESCE(source_sender, $2),
+         source_from_address = COALESCE(source_from_address, $3),
+         source_summary = COALESCE(source_summary, $4)
+     WHERE id = $5
+     RETURNING *`,
+    [
+      message.subject || null,
+      message.sender || null,
+      message.fromAddress || null,
+      message.summary || null,
+      rfqId,
+    ]
+  );
+
   return result.rows[0] || null;
 };
 
@@ -73,7 +103,8 @@ export const createRFQFromEmail = async (
   extractedData: ExtractedEmailData,
   rawEmail: string,
   sourceMessageId: string,
-  sourceReceivedAt: Date | null
+  sourceReceivedAt: Date | null,
+  message?: ZohoMessageRef
 ) => {
   await ensureEmailImportSchema();
 
@@ -88,9 +119,10 @@ export const createRFQFromEmail = async (
       rfq_number, client_name, company, delivery_location, contact_number,
       items, required_by, special_requirements, source, raw_email,
       rfq_type, approved_makes, certifications, confidence_score,
-      payment_terms, delivery_terms, source_message_id, source_received_at
+      payment_terms, delivery_terms, source_message_id, source_received_at,
+      source_subject, source_sender, source_from_address, source_summary
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
     ON CONFLICT (source_message_id) WHERE source_message_id IS NOT NULL DO NOTHING
     RETURNING *`,
     [
@@ -112,6 +144,10 @@ export const createRFQFromEmail = async (
       extractedData.delivery_terms || null,
       sourceMessageId,
       sourceReceivedAt,
+      message?.subject || null,
+      message?.sender || null,
+      message?.fromAddress || null,
+      message?.summary || null,
     ]
   );
 

@@ -74,7 +74,8 @@ const RFQManagement: React.FC = () => {
           : (d.quantity_mt || 0);
         return {
           id: d.rfq_number,
-          client: d.company || d.client_name || 'Unknown',
+          client: d.source_subject || d.company || d.client_name || 'Unknown',
+          extractedCompany: d.company,
           contactName: d.client_name,
           contactNumber: d.contact_number,
           material: firstMaterial,
@@ -84,7 +85,8 @@ const RFQManagement: React.FC = () => {
           requiredBy: d.required_by ? new Date(d.required_by).toISOString().split('T')[0] : 'N/A',
           vendorsSent: 0,
           status: d.status || 'New',
-          created: d.created_at,
+          created: d.source_received_at || d.created_at,
+          importedAt: d.created_at,
           deliveryLocation: d.delivery_location || '',
           source: d.source || 'Manual',
           rfqType: d.rfq_type,
@@ -92,7 +94,11 @@ const RFQManagement: React.FC = () => {
           certifications: d.certifications,
           confidenceScore: d.confidence_score,
           paymentTerms: d.payment_terms,
-          deliveryTerms: d.delivery_terms
+          deliveryTerms: d.delivery_terms,
+          sourceSubject: d.source_subject,
+          sourceSender: d.source_sender,
+          sourceFromAddress: d.source_from_address,
+          sourceSummary: d.source_summary
         };
       });
       setRfqs(sortNewestRFQs(mapped));
@@ -178,7 +184,7 @@ const RFQManagement: React.FC = () => {
     const now = new Date();
     const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
     if (diffDays === 0) {
-      return `Today, ${date.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}`;
+      return `Today, ${date.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' })}`;
     }
     if (diffDays === 1) return '1 day ago';
     return `${diffDays} days ago`;
@@ -314,6 +320,11 @@ const RFQManagement: React.FC = () => {
                         <span className="text-[10px] font-body text-text-secondary bg-bg-secondary border border-border px-1.5 py-0.5 rounded">{getRelativeDate(rfq.created)}</span>
                       </div>
                       <h4 className="text-[15px] font-body font-semibold text-text-primary mb-1 line-clamp-1">{rfq.client}</h4>
+                      {rfq.extractedCompany && rfq.extractedCompany !== rfq.client && (
+                        <p className="text-[12px] font-body text-text-secondary mb-2 line-clamp-1">
+                          Parsed company: {rfq.extractedCompany}
+                        </p>
+                      )}
                       
                       <div className="flex items-center gap-1.5 flex-wrap mb-4">
                          <span className="text-[11px] font-body font-medium text-text-secondary bg-bg-secondary px-2 py-0.5 rounded-full line-clamp-1 max-w-[180px]">{rfq.material}</span>

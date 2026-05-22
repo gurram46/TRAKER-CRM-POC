@@ -16,6 +16,10 @@ async function setup() {
       raw_email TEXT,
       source_message_id TEXT,
       source_received_at TIMESTAMP,
+      source_subject TEXT,
+      source_sender TEXT,
+      source_from_address TEXT,
+      source_summary TEXT,
       created_at TIMESTAMP DEFAULT NOW()
     );
 

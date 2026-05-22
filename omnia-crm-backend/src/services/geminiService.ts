@@ -41,6 +41,13 @@ EXTRACTION GOALS:
 6. Extract "payment_terms" and "delivery_terms".
 7. Assign a "confidence_score" (0-100) based on how well you understood the email.
 
+BUYER / COMPANY RULES:
+* Do NOT blindly use procurement platform or template names as the buyer company.
+* If text says "Greeting From L&T SUFIN" or uses an L&T SuFin techno-commercial format, treat "L&T SuFin" as the sourcing portal/template unless the email explicitly says L&T SuFin is the buyer.
+* Prefer the actual project/customer from the subject/body, e.g. "CMRL Project in Chennai", over portal names.
+* If the only reliable business context is a project, set "company" to that project/customer name and keep the contact person from the body.
+* If the sender is forwarding a requirement and the body has "Vendor Name:" blank, do not invent the vendor as the buyer.
+
 OUTPUT RULES:
 * Return ONLY valid JSON
 * No markdown, no explanation, no extra text
@@ -80,8 +87,14 @@ INPUT EMAIL:
 ${emailContent}`;
 
   const callGemini = async (apiKey: string) => {
+    if (!apiKey) {
+      throw new Error("Gemini API key is not configured");
+    }
+
+    const modelName = process.env.GEMINI_MODEL || "gemini-3.5-flash";
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+    const model = genAI.getGenerativeModel({ model: modelName });
+    console.log(`Calling Gemini model: ${modelName}`);
     const result = await model.generateContent(prompt);
     return result.response.text();
   };
@@ -90,8 +103,16 @@ ${emailContent}`;
   try {
     responseText = await callGemini(process.env.GEMINI_API_KEY || '');
   } catch (err: any) {
-    if (err.status === 429 || err.message?.includes('429') || err.message?.includes('Too Many Requests')) {
-      console.log("Primary Gemini API key rate limited, using fallback...");
+    const shouldTryFallback =
+      err.status === 403 ||
+      err.status === 429 ||
+      err.message?.includes('403') ||
+      err.message?.includes('429') ||
+      err.message?.includes('reported as leaked') ||
+      err.message?.includes('Too Many Requests');
+
+    if (shouldTryFallback && process.env.GEMINI_FALLBACK_API_KEY) {
+      console.log("Primary Gemini API key failed, using fallback key...");
       responseText = await callGemini(process.env.GEMINI_FALLBACK_API_KEY || '');
     } else {
       throw err;

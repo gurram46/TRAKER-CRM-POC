@@ -8,6 +8,7 @@ import {
   findRFQBySourceMessageId,
   getEmailSourceMessageId,
   getMessageReceivedDate,
+  updateRFQSourceMetadata,
 } from '../services/rfqEmailImportService';
 
 export const getAllRFQs = async (req: Request, res: Response): Promise<void> => {
@@ -67,6 +68,7 @@ export const importFromEmail = async (req: Request, res: Response): Promise<void
 
       const existingRFQ = await findRFQBySourceMessageId(sourceMessageId);
       if (existingRFQ) {
+        await updateRFQSourceMetadata(existingRFQ.id, msg);
         skipped.push({
           reason: 'already_imported',
           messageId: msg.messageId,
@@ -92,7 +94,8 @@ export const importFromEmail = async (req: Request, res: Response): Promise<void
         extractedData,
         content,
         sourceMessageId,
-        sourceReceivedAt
+        sourceReceivedAt,
+        msg
       );
 
       if (createdRFQ) {
