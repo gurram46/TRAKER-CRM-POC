@@ -133,24 +133,7 @@ const S = `
     font-weight: 400;
   }
 
-  /* feature pills */
-  .feature-list {
-    display: flex; flex-wrap: wrap; gap: 8px;
-  }
-  .feat-pill {
-    display: flex; align-items: center; gap: 6px;
-    background: #fff; border: 1px solid #e5e7eb;
-    border-radius: 100px; padding: 6px 13px;
-    font-size: 12px; font-weight: 600; color: #374151;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-    transition: all 0.2s;
-  }
-  .feat-pill:hover {
-    border-color: #c7caf9; background: #f5f5ff; color: #4f46e5;
-  }
-  .feat-dot {
-    width: 6px; height: 6px; border-radius: 50%;
-  }
+
 
   .left-footer {
     font-size: 12px; color: #9ca3af; font-weight: 500;
@@ -165,7 +148,7 @@ const S = `
     min-height: 100vh;
   }
 
-  .login-card {
+  .login-box {
     width: 100%; max-width: 400px;
     background: #ffffff;
     border-radius: 24px;
@@ -183,20 +166,20 @@ const S = `
     to   { opacity: 1; transform: translateY(0) scale(1); }
   }
 
-  .card-eyebrow {
+  .header-eyebrow {
     display: flex; align-items: center; gap: 10px; margin-bottom: 28px;
   }
-  .card-avatar {
+  .header-avatar {
     width: 44px; height: 44px; border-radius: 12px;
     background: linear-gradient(135deg, #eef0fd, #ddd9fb);
     display: flex; align-items: center; justify-content: center;
     border: 1px solid #c7caf9;
   }
-  .card-hi {
+  .header-hi {
     font-size: 20px; font-weight: 800; color: #0f1117;
     letter-spacing: -0.5px; line-height: 1.1; margin-bottom: 2px;
   }
-  .card-sub { font-size: 13px; color: #9ca3af; font-weight: 400; }
+  .header-sub { font-size: 13px; color: #9ca3af; font-weight: 400; }
 
   /* fields */
   .field { margin-bottom: 16px; }
@@ -336,17 +319,17 @@ const S = `
   .shake { animation: shake 0.35s ease; }
 
   /* stagger right panel children */
-  .login-card > * {
+  .login-box > * {
     animation: fade-up 0.5s cubic-bezier(0.16,1,0.3,1) both;
   }
-  .login-card > *:nth-child(1) { animation-delay: 0.15s; }
-  .login-card > *:nth-child(2) { animation-delay: 0.2s; }
-  .login-card > *:nth-child(3) { animation-delay: 0.25s; }
-  .login-card > *:nth-child(4) { animation-delay: 0.28s; }
-  .login-card > *:nth-child(5) { animation-delay: 0.31s; }
-  .login-card > *:nth-child(6) { animation-delay: 0.34s; }
-  .login-card > *:nth-child(7) { animation-delay: 0.37s; }
-  .login-card > *:nth-child(8) { animation-delay: 0.40s; }
+  .login-box > *:nth-child(1) { animation-delay: 0.15s; }
+  .login-box > *:nth-child(2) { animation-delay: 0.2s; }
+  .login-box > *:nth-child(3) { animation-delay: 0.25s; }
+  .login-box > *:nth-child(4) { animation-delay: 0.28s; }
+  .login-box > *:nth-child(5) { animation-delay: 0.31s; }
+  .login-box > *:nth-child(6) { animation-delay: 0.34s; }
+  .login-box > *:nth-child(7) { animation-delay: 0.37s; }
+  .login-box > *:nth-child(8) { animation-delay: 0.40s; }
   @keyframes fade-up {
     from { opacity: 0; transform: translateY(10px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -358,14 +341,7 @@ const S = `
   }
 `;
 
-const features = [
-  { label: "RFQ Tracking", color: "#6366f1" },
-  { label: "Quotations", color: "#0ea5e9" },
-  { label: "Payment Tracking", color: "#f59e0b" },
-  { label: "Logistics", color: "#10b981" },
-  { label: "Follow-up Reminders", color: "#ec4899" },
-  { label: "Zoho CRM Sync", color: "#8b5cf6" },
-];
+
 
 
 
@@ -426,7 +402,7 @@ export default function LoginPage() {
                   <path d="M3 17h14" />
                 </svg>
               </div>
-              <span className="brand-name">OMNIA <span>STEELS</span></span>
+              <span className="brand-name">ENTERPRISE <span>CRM</span></span>
             </div>
 
             {/* hero */}
@@ -434,43 +410,34 @@ export default function LoginPage() {
 
 
               <h1 className="hero-title">
-                Steel trading,<br />
+                Business operations,<br />
                 managed with<br />
                 <em>precision.</em>
               </h1>
 
               <p className="hero-desc">
-                Omnia Steels — Hyderabad's trusted name in HR coils, TMT bars,
-                and structural steel.
+                A powerful, precision-driven platform for managing trading operations,
+                quotations, and enterprise workflows.
               </p>
 
-              {/* feature pills */}
-              <div className="feature-list">
-                {features.map((f, i) => (
-                  <div className="feat-pill" key={i}>
-                    <div className="feat-dot" style={{ background: f.color }} />
-                    {f.label}
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
 
           {/* ────── RIGHT ────── */}
           <div className="right-col">
-            <div className="login-card">
+            <div className="login-box">
 
-              {/* card header */}
-              <div className="card-eyebrow">
-                <div className="card-avatar">
+              {/* header */}
+              <div className="header-eyebrow">
+                <div className="header-avatar">
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#6366f1" strokeWidth="1.8" strokeLinecap="round">
                     <path d="M3 13l4-7 5 3 5-6" />
                     <path d="M3 17h14" />
                   </svg>
                 </div>
                 <div>
-                  <div className="card-hi">Welcome back </div>
-                  <div className="card-sub">Sign in to your workspace</div>
+                  <div className="header-hi">Welcome back </div>
+                  <div className="header-sub">Sign in to your workspace</div>
                 </div>
               </div>
 

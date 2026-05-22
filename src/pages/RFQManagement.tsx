@@ -10,6 +10,17 @@ import { getAllRFQs, importFromEmail } from '../services/api';
 
 const statusTabs = ['All', 'New', 'Sent', 'Responded', 'Converted'] as const;
 
+const getRfqCreatedTime = (rfq: any) => {
+  const parsedDate = Date.parse(rfq.created || rfq.created_at || '');
+  if (!Number.isNaN(parsedDate)) return parsedDate;
+
+  const timestampMatch = String(rfq.id || rfq.rfq_number || '').match(/RFQ-(\d+)/);
+  return timestampMatch ? Number(timestampMatch[1]) : 0;
+};
+
+const sortNewestRFQs = <T extends Record<string, any>>(items: T[]) =>
+  [...items].sort((a, b) => getRfqCreatedTime(b) - getRfqCreatedTime(a));
+
 const RFQManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -84,7 +95,7 @@ const RFQManagement: React.FC = () => {
           deliveryTerms: d.delivery_terms
         };
       });
-      setRfqs(mapped);
+      setRfqs(sortNewestRFQs(mapped));
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -135,7 +146,7 @@ const RFQManagement: React.FC = () => {
           r.id.toLowerCase().includes(q)
       );
     }
-    return data;
+    return sortNewestRFQs(data);
   }, [activeTab, searchQuery, rfqs]);
 
   const statusCounts = useMemo(() => {
@@ -155,9 +166,13 @@ const RFQManagement: React.FC = () => {
 
   const getRelativeDate = (dateStr: string) => {
     const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) return 'Unknown';
+
     const now = new Date();
     const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-    if (diffDays === 0) return 'Today';
+    if (diffDays === 0) {
+      return `Today, ${date.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}`;
+    }
     if (diffDays === 1) return '1 day ago';
     return `${diffDays} days ago`;
   };
@@ -196,19 +211,13 @@ const RFQManagement: React.FC = () => {
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex items-baseline gap-2">
           <h1 className="text-2xl font-display font-bold text-text-primary">RFQ Management</h1>
-          <span className="text-xs font-mono font-medium text-accent-primary bg-accent-primary/10 px-2.5 py-1 rounded-full border border-accent-primary/20">
-            {rfqs.length} RFQs
+          <span className="text-sm font-medium text-text-muted ml-1">
+            ({rfqs.length} total)
           </span>
         </div>
         <div className="flex items-center gap-2.5">
-          {/* Live AI Automation Badge */}
-          <div className="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.1)]">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
-            <span className="text-[10px] font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 uppercase tracking-widest">Live AI Automation</span>
-          </div>
-
           {/* Import from Email Button */}
           <button
             onClick={handleAutoImport}
@@ -486,10 +495,10 @@ const RFQManagement: React.FC = () => {
               Close
             </button>
             <button
-              onClick={() => navigate('/quotations', { state: { rfq: selectedRFQ } })}
+              onClick={() => navigate('/quotation-builder', { state: { rfq: selectedRFQ } })}
               className="px-4 py-2 text-sm font-body font-medium text-white bg-accent-primary hover:bg-accent-secondary rounded-md transition-colors"
             >
-              Create Quotation
+              Generate Quotation
             </button>
           </>
         }

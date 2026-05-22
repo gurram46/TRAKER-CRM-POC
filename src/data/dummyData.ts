@@ -61,7 +61,7 @@ export interface RFQ {
   deliveryTerms?: string;
 }
 
-export const rfqData: RFQ[] = [
+export const rfqData: any[] = [
   { id: '#RFQ-2024-0047', client: 'Vijaya Constructions', contact: '9876543210', material: 'HR Coil', quantity: 120, requiredBy: '2024-12-22', vendorsSent: 3, status: 'New', created: '2024-12-18' },
   { id: '#RFQ-2024-0046', client: 'Sri Lakshmi Steels', contact: '9845612378', material: 'TMT Bars', quantity: 80, requiredBy: '2024-12-25', vendorsSent: 4, status: 'Sent', created: '2024-12-16' },
   { id: '#RFQ-2024-0045', client: 'Prasad Infrastructure', contact: '9912345678', material: 'CR Sheet', quantity: 45, requiredBy: '2024-12-20', vendorsSent: 2, status: 'Responded', created: '2024-12-15' },
