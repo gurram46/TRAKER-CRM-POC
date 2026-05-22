@@ -44,5 +44,10 @@ app.use('/api/quotations', quotationRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
-  startEmailPolling();
+
+  if (process.env.ENABLE_EMAIL_POLLING === 'true') {
+    startEmailPolling();
+  } else {
+    console.log('Email polling disabled. Use Import from Email button.');
+  }
 });

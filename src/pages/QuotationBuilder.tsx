@@ -24,9 +24,14 @@ const QuotationBuilder: React.FC = () => {
   const rfq = location.state?.rfq;
   const printRef = useRef<HTMLDivElement>(null);
 
-  const [clientName, setClientName] = useState(rfq?.clientName || rfq?.client || '');
+  const rfqDisplayTitle = rfq?.sourceSubject || rfq?.client || '';
+  const rfqCompany = rfq?.extractedCompany || rfq?.company || '';
+  const rfqContactPerson = rfq?.contactName || rfq?.clientName || '';
+  const rfqContactEmail = rfq?.sourceFromAddress || '';
+
+  const [clientName, setClientName] = useState(rfqDisplayTitle || rfqCompany || '');
   const [clientContact, setClientContact] = useState(rfq?.contactNumber || '');
-  const [clientEmail, setClientEmail] = useState('');
+  const [clientEmail, setClientEmail] = useState(rfqContactEmail);
   const [clientAddress, setClientAddress] = useState(rfq?.deliveryLocation || '');
   
   // Default items from RFQ or a single empty item
@@ -239,8 +244,8 @@ const QuotationBuilder: React.FC = () => {
   }));
 
   const vendorInfo = {
-    vendorName: clientName || '',
-    contactPerson: '',
+    vendorName: rfqCompany || clientName || '',
+    contactPerson: rfqContactPerson || '',
     contactNo: clientContact || '',
     contactMailId: clientEmail || ''
   };
@@ -251,7 +256,7 @@ const QuotationBuilder: React.FC = () => {
     freight,
     gstPercent,
     vendorRemarks,
-    projectName: rfq?.deliveryLocation || clientAddress || 'Project Site',
+    projectName: clientName || rfqDisplayTitle || clientAddress || 'Project Site',
     deliveryAddress: clientAddress || '',
     noteText: rfq?.approvedMakes?.length > 0 ? `Make shall be from ${rfq.approvedMakes.join(', ')} only` : undefined
   };
