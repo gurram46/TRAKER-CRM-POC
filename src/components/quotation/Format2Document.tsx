@@ -144,7 +144,7 @@ const Format2Document: React.FC<Format2DocumentProps> = ({
               <td style={t({ textAlign: "center" })}>{item.qty}</td>
               <td style={t({ textAlign: "center" })}>{item.hsnCode ?? ""}</td>
               <td style={t({ textAlign: "right" })}>{item.unitRate ? fmt(item.unitRate) : ""}</td>
-              <td style={t({ textAlign: "right" })}>{item.unitRate ? fmt(item.qty * item.unitRate) : ""}</td>
+              <td style={t({ textAlign: "right" })}>{item.unitRate ? fmt((Number(item.qty) || 0) * item.unitRate) : ""}</td>
             </tr>
           ))}
 

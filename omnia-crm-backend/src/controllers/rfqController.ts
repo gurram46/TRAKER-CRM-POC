@@ -2,6 +2,13 @@ import { Request, Response } from 'express';
 import { query } from '../config/db';
 import { fetchLatestEmails, getEmailContent } from '../services/zohoService';
 import { extractRFQFromEmail } from '../services/geminiService';
+import {
+  createRFQFromEmail,
+  findLegacyRFQByRawEmail,
+  findRFQBySourceMessageId,
+  getEmailSourceMessageId,
+  getMessageReceivedDate,
+} from '../services/rfqEmailImportService';
 
 export const getAllRFQs = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -49,41 +56,59 @@ export const importFromEmail = async (req: Request, res: Response): Promise<void
   try {
     const { accountId, messages } = await fetchLatestEmails();
     const createdRFQs = [];
+    const skipped = [];
 
     for (const msg of messages) {
+      const sourceMessageId = getEmailSourceMessageId(accountId, msg);
+      if (!sourceMessageId) {
+        skipped.push({ reason: 'missing_message_id', message: msg });
+        continue;
+      }
+
+      const existingRFQ = await findRFQBySourceMessageId(sourceMessageId);
+      if (existingRFQ) {
+        skipped.push({
+          reason: 'already_imported',
+          messageId: msg.messageId,
+          rfq_number: existingRFQ.rfq_number,
+        });
+        continue;
+      }
+
       const content = await getEmailContent(accountId, msg.folderId, msg.messageId);
+      const sourceReceivedAt = getMessageReceivedDate(msg);
+      const legacyRFQ = await findLegacyRFQByRawEmail(content, sourceMessageId, sourceReceivedAt);
+      if (legacyRFQ) {
+        skipped.push({
+          reason: 'already_imported_legacy_match',
+          messageId: msg.messageId,
+          rfq_number: legacyRFQ.rfq_number,
+        });
+        continue;
+      }
+
       const extractedData = await extractRFQFromEmail(content);
-      
-      const rfq_number = 'RFQ-' + Date.now();
-      const requiredByDate = extractedData.required_by && extractedData.required_by.trim() !== '' ? new Date(extractedData.required_by) : null;
-      
-      const insertResult = await query(
-        `INSERT INTO rfqs (rfq_number, client_name, company, delivery_location, contact_number, items, required_by, special_requirements, source, raw_email, rfq_type, approved_makes, certifications, confidence_score, payment_terms, delivery_terms) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *`,
-        [
-          rfq_number, 
-          extractedData.client_name, 
-          extractedData.company,
-          extractedData.delivery_location,
-          extractedData.contact_number, 
-          JSON.stringify(extractedData.items || []), 
-          requiredByDate, 
-          extractedData.special_requirements, 
-          'email', 
-          content,
-          extractedData.rfq_type || 'Simple RFQ',
-          JSON.stringify(extractedData.approved_makes || []),
-          JSON.stringify(extractedData.certifications || []),
-          extractedData.confidence_score || 80,
-          extractedData.payment_terms || null,
-          extractedData.delivery_terms || null
-        ]
+      const createdRFQ = await createRFQFromEmail(
+        extractedData,
+        content,
+        sourceMessageId,
+        sourceReceivedAt
       );
-      
-      createdRFQs.push(insertResult.rows[0]);
+
+      if (createdRFQ) {
+        createdRFQs.push(createdRFQ);
+      } else {
+        skipped.push({ reason: 'already_imported', messageId: msg.messageId });
+      }
     }
     
-    res.json(createdRFQs);
+    res.json({
+      success: true,
+      createdCount: createdRFQs.length,
+      skippedCount: skipped.length,
+      data: createdRFQs,
+      skipped,
+    });
   } catch (error: any) {
     console.error(error);
     res.status(500).json({ error: error.message });

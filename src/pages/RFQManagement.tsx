@@ -112,9 +112,16 @@ const RFQManagement: React.FC = () => {
 
     try {
       const result = await importFromEmail();
-      const count = Array.isArray(result) ? result.length : 1;
+      const createdCount = Array.isArray(result) ? result.length : (result.createdCount ?? result.data?.length ?? 0);
+      const skippedCount = Array.isArray(result) ? 0 : (result.skippedCount ?? result.skipped?.length ?? 0);
       setImportState(null);
-      setToastMessage(`✅ ${count} RFQ(s) created successfully!`);
+      if (createdCount === 0 && skippedCount > 0) {
+        setToastMessage(`No new RFQs. ${skippedCount} email(s) were already imported.`);
+      } else if (skippedCount > 0) {
+        setToastMessage(`${createdCount} RFQ(s) created, ${skippedCount} duplicate email(s) skipped.`);
+      } else {
+        setToastMessage(`${createdCount} RFQ(s) created successfully!`);
+      }
       setShowToast(true);
       await fetchRFQs();
     } catch (err: any) {

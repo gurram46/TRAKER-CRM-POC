@@ -1,7 +1,13 @@
-import { query } from '../config/db';
 import { fetchLatestEmails, getEmailContent } from './zohoService';
 import { extractRFQFromEmail } from './geminiService';
 import { EventEmitter } from 'events';
+import {
+  createRFQFromEmail,
+  findLegacyRFQByRawEmail,
+  findRFQBySourceMessageId,
+  getEmailSourceMessageId,
+  getMessageReceivedDate,
+} from './rfqEmailImportService';
 
 export const rfqEventEmitter = new EventEmitter();
 
@@ -23,37 +29,45 @@ export const startEmailPolling = () => {
         const msgTime = Number(msg.receivedTime || msg.createdTime || 0);
         
         if (msgTime > lastCheckedTime) {
+          const sourceMessageId = getEmailSourceMessageId(accountId, msg);
+          if (!sourceMessageId) {
+            console.log('Skipping email without a Zoho messageId.');
+            lastCheckedTime = Math.max(lastCheckedTime, msgTime);
+            continue;
+          }
+
+          const existingRFQ = await findRFQBySourceMessageId(sourceMessageId);
+          if (existingRFQ) {
+            console.log(`Skipping already imported email ${msg.messageId} (${existingRFQ.rfq_number}).`);
+            lastCheckedTime = Math.max(lastCheckedTime, msgTime);
+            continue;
+          }
+
           console.log(`Processing new email received at ${new Date(msgTime).toISOString()}`);
           const content = await getEmailContent(accountId, msg.folderId, msg.messageId);
+          const sourceReceivedAt = getMessageReceivedDate(msg);
+          const legacyRFQ = await findLegacyRFQByRawEmail(content, sourceMessageId, sourceReceivedAt);
+          if (legacyRFQ) {
+            console.log(`Skipping previously imported legacy email ${msg.messageId} (${legacyRFQ.rfq_number}).`);
+            lastCheckedTime = Math.max(lastCheckedTime, msgTime);
+            continue;
+          }
+
           const extractedData = await extractRFQFromEmail(content);
-          
-          const rfq_number = 'RFQ-' + Date.now();
-          const requiredByDate = extractedData.required_by && extractedData.required_by.trim() !== '' ? new Date(extractedData.required_by) : null;
-          
-          const insertResult = await query(
-            `INSERT INTO rfqs (rfq_number, client_name, company, delivery_location, contact_number, items, required_by, special_requirements, source, raw_email, rfq_type, approved_makes, certifications, confidence_score, payment_terms, delivery_terms) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *`,
-            [
-              rfq_number, 
-              extractedData.client_name, 
-              extractedData.company,
-              extractedData.delivery_location,
-              extractedData.contact_number, 
-              JSON.stringify(extractedData.items || []), 
-              requiredByDate, 
-              extractedData.special_requirements, 
-              'email', 
-              content,
-              extractedData.rfq_type || 'Simple RFQ',
-              JSON.stringify(extractedData.approved_makes || []),
-              JSON.stringify(extractedData.certifications || []),
-              extractedData.confidence_score || 80,
-              extractedData.payment_terms || null,
-              extractedData.delivery_terms || null
-            ]
+
+          const createdRfq = await createRFQFromEmail(
+            extractedData,
+            content,
+            sourceMessageId,
+            sourceReceivedAt
           );
-          
-          const createdRfq = insertResult.rows[0];
+
+          if (!createdRfq) {
+            console.log(`Email ${msg.messageId} was already imported by another request.`);
+            lastCheckedTime = Math.max(lastCheckedTime, msgTime);
+            continue;
+          }
+
           console.log(`Created RFQ ${createdRfq.rfq_number} automatically from polling.`);
           
           // Emit SSE notification to frontend

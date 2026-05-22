@@ -14,8 +14,14 @@ async function setup() {
       status VARCHAR(50) DEFAULT 'New',
       source VARCHAR(50) DEFAULT 'manual',
       raw_email TEXT,
+      source_message_id TEXT,
+      source_received_at TIMESTAMP,
       created_at TIMESTAMP DEFAULT NOW()
     );
+
+    CREATE UNIQUE INDEX IF NOT EXISTS rfqs_source_message_id_unique
+    ON rfqs (source_message_id)
+    WHERE source_message_id IS NOT NULL;
   `;
   try {
     await query(sql);
