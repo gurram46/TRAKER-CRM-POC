@@ -21,6 +21,12 @@ const getRfqCreatedTime = (rfq: any) => {
 const sortNewestRFQs = <T extends Record<string, any>>(items: T[]) =>
   [...items].sort((a, b) => getRfqCreatedTime(b) - getRfqCreatedTime(a));
 
+const getProjectGroupFromRemarks = (remarks?: string) => {
+  if (!remarks) return '';
+  const match = remarks.match(/(Project\s+[A-Z]\s*[-–]\s*[^,;]+)/i);
+  return match ? match[1].trim() : '';
+};
+
 const RFQManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -645,15 +651,31 @@ const RFQManagement: React.FC = () => {
                   </thead>
                   <tbody className="divide-y divide-border">
                     {selectedRFQ.items && selectedRFQ.items.length > 0 ? (
-                      selectedRFQ.items.map((item: any, idx: number) => (
-                        <tr key={idx} className="bg-bg-primary">
-                          <td className="p-3 text-sm font-body text-text-secondary">{idx + 1}</td>
-                          <td className="p-3 text-sm font-body text-text-primary">{item.material_type}</td>
-                          <td className="p-3 text-sm font-body text-text-secondary">{[item.grade, item.specification].filter(Boolean).join(' / ') || '—'}</td>
-                          <td className="p-3 text-sm font-mono text-text-primary text-right">{item.quantity_mt}</td>
-                          <td className="p-3 text-sm font-body text-text-secondary">{item.remarks || '—'}</td>
-                        </tr>
-                      ))
+                      selectedRFQ.items.map((item: any, idx: number) => {
+                        const projectGroup = item.project_group || getProjectGroupFromRemarks(item.remarks);
+                        const prevProjectGroup = idx > 0
+                          ? (selectedRFQ.items[idx - 1].project_group || getProjectGroupFromRemarks(selectedRFQ.items[idx - 1].remarks))
+                          : '';
+
+                        return (
+                          <React.Fragment key={idx}>
+                            {projectGroup && projectGroup !== prevProjectGroup && (
+                              <tr className="bg-accent-primary/10">
+                                <td colSpan={5} className="p-2 text-xs font-display font-semibold text-accent-primary uppercase tracking-wider">
+                                  {projectGroup}
+                                </td>
+                              </tr>
+                            )}
+                            <tr className="bg-bg-primary">
+                              <td className="p-3 text-sm font-body text-text-secondary">{idx + 1}</td>
+                              <td className="p-3 text-sm font-body text-text-primary">{item.material_type}</td>
+                              <td className="p-3 text-sm font-body text-text-secondary">{[item.grade, item.specification].filter(Boolean).join(' / ') || '—'}</td>
+                              <td className="p-3 text-sm font-mono text-text-primary text-right">{item.quantity_mt}</td>
+                              <td className="p-3 text-sm font-body text-text-secondary">{item.remarks || '—'}</td>
+                            </tr>
+                          </React.Fragment>
+                        );
+                      })
                     ) : (
                       <tr className="bg-bg-primary">
                         <td colSpan={4} className="p-4 text-sm font-body text-text-muted text-center">No items listed</td>

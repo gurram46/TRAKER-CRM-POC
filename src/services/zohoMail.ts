@@ -63,6 +63,11 @@ export interface ZohoSendPayload {
   content: string;        // HTML or plain text body
   mailFormat?: 'html' | 'plaintext';
   askReceipt?: 'yes' | 'no';
+  attachments?: {
+    fileName: string;
+    contentType?: string;
+    base64: string;
+  }[];
 }
 
 export interface ZohoApiResponse<T> {
@@ -95,6 +100,10 @@ const ZOHO_CONFIG = {
  */
 const isDemoMode = (): boolean => {
   return !import.meta.env.VITE_BACKEND_URL;
+};
+
+const isEmailSendDemoMode = (): boolean => {
+  return import.meta.env.VITE_EMAIL_SEND_DEMO === 'true';
 };
 
 /**
@@ -137,7 +146,7 @@ export async function fetchMessage(messageId: string): Promise<ZohoEmail> {
  * Zoho API: POST /api/accounts/{accountId}/messages
  */
 export async function sendEmail(payload: ZohoSendPayload): Promise<{ messageId: string; success: boolean }> {
-  if (isDemoMode()) {
+  if (isEmailSendDemoMode()) {
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 800));
     return { messageId: `MOCK-${Date.now()}`, success: true };
@@ -148,9 +157,15 @@ export async function sendEmail(payload: ZohoSendPayload): Promise<{ messageId: 
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error(`Failed to send email: ${res.status}`);
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Failed to send email: ${res.status} ${errorText}`);
+  }
   const json = await res.json();
-  return json.data;
+  return {
+    messageId: json.data?.messageId || json.data?.response?.data?.messageId || `ZOHO-${Date.now()}`,
+    success: true,
+  };
 }
 
 /**

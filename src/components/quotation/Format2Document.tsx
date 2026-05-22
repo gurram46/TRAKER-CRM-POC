@@ -7,6 +7,8 @@ export interface LineItem {
   qty: number | string;
   hsnCode?: string;
   unitRate?: number;
+  projectGroup?: string;
+  remarks?: string;
 }
 
 export interface VendorInfo {
@@ -136,17 +138,34 @@ const Format2Document: React.FC<Format2DocumentProps> = ({
           </tr>
 
           {/* ── LINE ITEMS ── */}
-          {items.map(item => (
-            <tr key={item.slNo}>
-              <td style={t({ textAlign: "center" })}>{item.slNo}</td>
-              <td style={t()}>{item.description}</td>
-              <td style={t({ textAlign: "center" })}>{item.uom}</td>
-              <td style={t({ textAlign: "center" })}>{item.qty}</td>
-              <td style={t({ textAlign: "center" })}>{item.hsnCode ?? ""}</td>
-              <td style={t({ textAlign: "right" })}>{item.unitRate ? fmt(item.unitRate) : ""}</td>
-              <td style={t({ textAlign: "right" })}>{item.unitRate ? fmt((Number(item.qty) || 0) * item.unitRate) : ""}</td>
-            </tr>
-          ))}
+          {items.map((item, index) => {
+            const showProjectGroup = item.projectGroup && item.projectGroup !== items[index - 1]?.projectGroup;
+            return (
+              <React.Fragment key={item.slNo}>
+                {showProjectGroup && (
+                  <tr>
+                    <td colSpan={7} style={t({ background: "#dce6f1", fontWeight: "bold" })}>
+                      {item.projectGroup}
+                    </td>
+                  </tr>
+                )}
+                <tr>
+                  <td style={t({ textAlign: "center" })}>{item.slNo}</td>
+                  <td style={t()}>
+                    {item.description}
+                    {item.remarks && item.remarks !== item.projectGroup && (
+                      <div style={{ color: "#333", fontSize: "10px", marginTop: "2px" }}>{item.remarks}</div>
+                    )}
+                  </td>
+                  <td style={t({ textAlign: "center" })}>{item.uom}</td>
+                  <td style={t({ textAlign: "center" })}>{item.qty}</td>
+                  <td style={t({ textAlign: "center" })}>{item.hsnCode ?? ""}</td>
+                  <td style={t({ textAlign: "right" })}>{item.unitRate ? fmt(item.unitRate) : ""}</td>
+                  <td style={t({ textAlign: "right" })}>{item.unitRate ? fmt((Number(item.qty) || 0) * item.unitRate) : ""}</td>
+                </tr>
+              </React.Fragment>
+            );
+          })}
 
           {/* ── A: Basic Value — col1=A, col2-6=label(colSpan5), col7=value ── */}
           <tr style={{ background: "#fffacd" }}>

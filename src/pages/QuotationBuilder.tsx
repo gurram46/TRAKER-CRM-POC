@@ -19,6 +19,23 @@ const formatINR = (n: number) => {
   return n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
+const blobToBase64 = (blob: Blob): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = String(reader.result || '');
+      resolve(result.includes(',') ? result.split(',')[1] : result);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+
+const getProjectGroupFromRemarks = (remarks?: string) => {
+  if (!remarks) return '';
+  const match = remarks.match(/(Project\s+[A-Z]\s*[-–]\s*[^,;]+)/i);
+  return match ? match[1].trim() : '';
+};
+
 const QuotationBuilder: React.FC = () => {
   const location = useLocation();
   const rfq = location.state?.rfq;
@@ -39,7 +56,9 @@ const QuotationBuilder: React.FC = () => {
     id: String(idx + 1),
     material: item.material_type || item.material || '',
     quantity: item.quantity_mt || item.quantity || 0,
-    basePrice: 0
+    basePrice: 0,
+    projectGroup: item.project_group || getProjectGroupFromRemarks(item.remarks),
+    remarks: item.remarks || ''
   })) || [
     { id: '1', material: '', quantity: 0, basePrice: 0 }
   ];
@@ -170,26 +189,35 @@ const QuotationBuilder: React.FC = () => {
     }
     setEmailTo(clientEmail || '');
     setEmailSubject(`Quotation ${quoteNumber} — Steel Products | Omnia Steels`);
-    setEmailBody(`Dear ${clientName || 'Sir/Madam'},\n\nPlease find attached our quotation ${quoteNumber}.\n\nQuote Summary:\n• Items: ${items.length}\n• Total (incl. GST + Freight): Rs. ${calc.total.toLocaleString()}\n• Valid for: 7 days from date of issue\n\nPlease review and let us know if you'd like to proceed or have any questions.\n\nRegards,\nRam Sharma\nOmnia Steels Pvt Ltd\n+91 98765 43210`);
+    setEmailBody(`Dear ${clientName || 'Sir/Madam'},\n\nPlease find attached our quotation ${quoteNumber}.\n\nQuote Summary:\n- Items: ${items.length}\n- Total (incl. GST + Freight): Rs. ${calc.total.toLocaleString()}\n- Valid for: 7 days from date of issue\n\nPlease review and let us know if you'd like to proceed or have any questions.\n\nRegards,\nRam Sharma\nOmnia Steels Pvt Ltd\n+91 98765 43210`);
     setShowEmailModal(true);
   };
 
   const handleSendWithPDF = async () => {
     setIsSending(true);
     try {
+      const attachments = pdfBlob
+        ? [{
+            fileName: pdfFileName || pdfFileNameGen,
+            contentType: 'application/pdf',
+            base64: await blobToBase64(pdfBlob),
+          }]
+        : [];
+
       await sendEmail({
         fromAddress: 'info@omniasteels.com',
         toAddress: emailTo,
         subject: emailSubject,
         content: emailBody,
+        attachments,
       });
 
       setShowEmailModal(false);
       setPdfBlob(null);
-      setToastMessage(`Quotation sent to ${emailTo} with PDF attached`);
+      setToastMessage(`Quotation email sent to ${emailTo}${attachments.length ? ' with PDF attached' : ''}`);
       setShowToast(true);
-    } catch {
-      setToastMessage('Failed to send — running in demo mode');
+    } catch (err: any) {
+      setToastMessage(`Failed to send email: ${err.message}`);
       setShowToast(true);
     } finally {
       setIsSending(false);
@@ -207,7 +235,7 @@ const QuotationBuilder: React.FC = () => {
   };
 
   const handleAddItem = () => {
-    setItems([...items, { id: Date.now().toString(), material: '', quantity: 0, basePrice: 0 }]);
+    setItems([...items, { id: Date.now().toString(), material: '', quantity: 0, basePrice: 0, projectGroup: '', remarks: '' }]);
   };
 
   const handleRemoveItem = (id: string) => {
@@ -240,7 +268,9 @@ const QuotationBuilder: React.FC = () => {
     description: item.material || '',
     uom: item.material ? 'MT' : '',
     qty: item.material ? (item.quantity ? Math.ceil(item.quantity) : '') : '',
-    unitRate: item.basePrice > 0 ? item.basePrice : undefined
+    unitRate: item.basePrice > 0 ? item.basePrice : undefined,
+    projectGroup: item.projectGroup || '',
+    remarks: item.remarks || ''
   }));
 
   const vendorInfo = {
@@ -314,6 +344,11 @@ const QuotationBuilder: React.FC = () => {
             <div className="space-y-4">
               {items.map((item, index) => (
                 <div key={item.id} className="p-4 bg-bg-primary border border-border rounded-md relative group">
+                  {item.projectGroup && (
+                    <div className="mb-3 text-[11px] font-display font-semibold text-accent-primary bg-accent-primary/10 border border-accent-primary/20 rounded px-2 py-1 inline-flex">
+                      {item.projectGroup}
+                    </div>
+                  )}
                   <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     {items.length > 1 && (
                       <button onClick={() => handleRemoveItem(item.id)} className="text-status-danger hover:bg-status-danger/10 p-1 rounded">
@@ -442,14 +477,23 @@ const QuotationBuilder: React.FC = () => {
                 <FileText className="text-red-500" />
                 <div>
                   <p className="text-sm font-medium">{pdfFileName}</p>
-                  <p className="text-xs text-gray-500">{pdfSizeKB} KB PDF Attached</p>
+                  <p className="text-xs text-gray-500">{pdfSizeKB} KB PDF will be attached to this email.</p>
                 </div>
               </div>
             </div>
           )}
-          <div><label className="block text-xs mb-1">To</label><input type="email" value={emailTo} onChange={e=>setEmailTo(e.target.value)} className="w-full bg-white border border-border rounded-md p-2 text-sm" /></div>
-          <div><label className="block text-xs mb-1">Subject</label><input type="text" value={emailSubject} onChange={e=>setEmailSubject(e.target.value)} className="w-full bg-white border border-border rounded-md p-2 text-sm" /></div>
-          <div><label className="block text-xs mb-1">Body</label><textarea value={emailBody} onChange={e=>setEmailBody(e.target.value)} rows={6} className="w-full bg-white border border-border rounded-md p-2 text-sm whitespace-pre-wrap"></textarea></div>
+          <div>
+            <label className="block text-xs mb-1 text-text-secondary">To</label>
+            <input type="email" value={emailTo} onChange={e=>setEmailTo(e.target.value)} className="w-full bg-bg-primary border border-border rounded-md p-2 text-sm text-text-primary placeholder:text-text-muted" />
+          </div>
+          <div>
+            <label className="block text-xs mb-1 text-text-secondary">Subject</label>
+            <input type="text" value={emailSubject} onChange={e=>setEmailSubject(e.target.value)} className="w-full bg-bg-primary border border-border rounded-md p-2 text-sm text-text-primary placeholder:text-text-muted" />
+          </div>
+          <div>
+            <label className="block text-xs mb-1 text-text-secondary">Body</label>
+            <textarea value={emailBody} onChange={e=>setEmailBody(e.target.value)} rows={6} className="w-full bg-bg-primary border border-border rounded-md p-2 text-sm text-text-primary placeholder:text-text-muted whitespace-pre-wrap"></textarea>
+          </div>
         </div>
       </Modal>
 

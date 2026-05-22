@@ -3,6 +3,8 @@ export interface QuoteItem {
   material: string;
   quantity: number;
   basePrice: number;
+  projectGroup?: string;
+  remarks?: string;
 }
 
 export interface FormatProps {
