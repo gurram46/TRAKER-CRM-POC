@@ -446,9 +446,8 @@ const QuotationBuilder: React.FC = () => {
         </div>
 
         {/* Right — Document Preview */}
-        <div className="overflow-auto bg-gray-100 rounded-md border border-border shadow-inner p-4 flex justify-center max-h-[85vh]">
-          {/* We wrap the document in a ref to capture via html2canvas */}
-          <div id="quotation-preview" ref={printRef} className="bg-white shadow-2xl shrink-0 overflow-hidden" style={{ width: '210mm' }}>
+        <div className="bg-gray-100 rounded-md border border-border shadow-inner p-4 max-h-[85vh] overflow-auto">
+          <div id="quotation-preview" ref={printRef} className="bg-white shadow-2xl origin-top-left" style={{ width: '210mm', transform: 'scale(0.72)', transformOrigin: 'top left', marginBottom: '-28%' }}>
              {format === 'simple' && <Format1Document {...docProps} />}
              {format === 'lnt' && <Format2Document {...format2Props} />}
              {format === 'rail' && <Format3Document {...docProps} />}
